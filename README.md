@@ -60,11 +60,23 @@ The correctness of the KRP rests on two fundamental properties: soundness and se
 
 #### Secrecy
 
-**Secrecy** ensures that the adversary gains zero information about the final shared key. This is analyzed using linear algebra over GF(2).
+**Secrecy** ensures that the adversary gains zero information about the final shared key, $K$. This property is formally defined using concepts from information theory. Let $K$ be the random variable for the final key and $\mathbf{k}_{E_A}$ be the set of random variables for the local keys on the adversary's wiretapped edges, $E_A$.
 
-- Let the set of all edges $E$ form a basis for a vector space of dimension $|E|$. Each edge $e_i$ is a basis vector.
-- The user's path $P$ can be represented as a **path vector**, $\vec{p}$, where the $i$-th component is 1 if $e_i \in P$ and 0 otherwise.
-- The adversary's knowledge corresponds to a **subspace**, $W$, spanned by the basis vectors of the wiretapped edges in $E_A$.
+Perfect secrecy is achieved if the mutual information between the key and the adversary's knowledge is zero:
+
+$$ I(K; \mathbf{k}_{E_A}) = 0 $$
+
+This implies that the adversary's observations provide no information about the key. In terms of entropy, this is equivalent to the conditional entropy of the key given the adversary's knowledge being equal to the key's total entropy:
+
+$$ H(K | \mathbf{k}_{E_A}) = H(K) $$
+
+Since each local key is an independent and uniformly random bit, the final key $K$ is also uniformly random, meaning $H(K) = 1$ bit. Thus, for perfect secrecy, the adversary must remain completely uncertain about the key.
+
+This information-theoretic condition translates directly into a problem of **linear algebra over GF(2)**:
+
+- The set of all edges $E$ forms a basis for a vector space of dimension $|E|$. Each edge $e_i$ corresponds to a basis vector.
+- The user's path $P$ is represented as a **path vector**, $\vec{p}$, where the $i$-th component is 1 if $e_i \in P$ and 0 otherwise.
+- The adversary's knowledge, $\mathbf{k}_{E_A}$, corresponds to a **subspace**, $W$, spanned by the basis vectors of the wiretapped edges in $E_A$.
 
 Information-theoretic secrecy holds if and only if the path vector $\vec{p}$ is linearly independent of the adversary's subspace $W$. Mathematically:
 
@@ -75,6 +87,19 @@ This is equivalent to checking if the rank of the adversary's subspace increases
 $$ \text{rank}(\{\vec{e} | e \in E_A\} \cup \{\vec{p}\}) = \text{rank}(\{\vec{e} | e \in E_A\}) + 1 $$
 
 If the rank does not increase, the path vector can be constructed from the adversary's known vectors, and the key is compromised. The implementation in `krp.py` uses a helper function, `_rank_gf2`, to perform this rank comparison over GF(2) and verify secrecy.
+
+#### The Min-Cut Condition
+
+As a critical prerequisite to the linear independence check, the set of edges controlled by the adversary must form a **minimum edge cut** (or *min-cut*) between the user pair. This condition ensures that the adversary has just enough access to potentially compromise the key, without having redundant information.
+
+- **Edge Cut**: A set of edges is a cut between a user pair $(u_1, u_2)$ if removing those edges from the graph disconnects the users, meaning there is no longer a path between them.
+- **Minimum Edge Cut**: An edge cut is a *minimum* cut if it has the smallest possible number of edges among all possible cuts that separate the users.
+
+The framework verifies this condition using the `verify_min_cut_condition` function, which confirms two things:
+1. That the adversary's set of wiretapped edges is indeed a cut.
+2. That the size of this set is equal to the size of the minimum cut for the user pair.
+
+Only if this condition is met does the simulation proceed to the final secrecy verification using linear algebra. This two-step process ensures a more rigorous and accurate security analysis.
 
 ---
 

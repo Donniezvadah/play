@@ -7,6 +7,19 @@ and verifies both soundness and secrecy properties under adversarial models.
 
 """
 
+'''
+So basically we are trying to build a KRP protocol verification framework.
+So, here are some of the things and fundamental part of this framework. 
+
+1. Graph Enumeration: We are going to enumerate all non-isomorphic undirected graphs with n_nodes nodes.
+2. User Pair: We are going to define a user pair as a tuple of two nodes.
+3. Adversary: We are going to define an adversary as a set of edges that the adversary can wiretap.
+4. Simulation: We are going to simulate the KRP protocol on each graph with specific user pairs and adversary.
+5. Verification: We are going to verify both soundness and secrecy properties under adversarial models.
+6. Plotting: We are going to plot the graph configuration with results.
+
+````'''
+
 import itertools
 import networkx as nx
 import random
@@ -291,7 +304,7 @@ if __name__ == "__main__":
         # Example: first two nodes as user pair
         user_pairs = [UserPair(0, 1)]
         
-        # --- Focus on connected graphs for the user pair ---
+        # --- Focus on connected graphs for the user pair ---x`x`x`xx`x``````
         if nx.has_path(G, user_pairs[0].node1, user_pairs[0].node2):
             print(f"\n--- Graph {idx+1} (Connected) ---")
             
