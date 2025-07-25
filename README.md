@@ -180,5 +180,5 @@ SECRECY BREACH: Path for UserPair (0,1) is in adversary's subspace.
 
 The script generates the following visualization for the K3 graph. The user pair (0, 1) is highlighted in blue, and all edges are marked as wiretapped (red, dashed) because the adversary has compromised the entire network.
 
-![K3 Graph Visualization](plots/graph_4_nodes_3.png)
+<!-- ![K3 Graph Visualization](plots/graph_4_nodes_3.png) -->
 

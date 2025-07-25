@@ -1,6 +1,10 @@
 """
 Key Relay Protocol (KRP) Verification Framework
 
+This script simulates the Key Relay Protocol (KRP) on various network graphs.
+It systematically verifies the protocol's security (soundness and secrecy) against a wiretapping adversary.
+Security is confirmed by checking min-cut conditions and linear independence of the key path from the adversary's knowledge.
+
 This module provides a detailed implementation of the KRP as described in the referenced paper.
 It supports exhaustive enumeration of all small undirected graphs, simulates the KRP on each,
 and verifies both soundness and secrecy properties under adversarial models.
