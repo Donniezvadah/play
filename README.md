@@ -1,92 +1,80 @@
 # Key Relay Protocol (KRP) Verification Framework
 
-This repository contains a Python-based framework for the simulation and verification of a Key Relay Protocol (KRP). It is designed to exhaustively test the protocol's properties on small, undirected graphs against a defined adversarial model. The framework includes utilities for graph enumeration, protocol simulation, and property verification (soundness and secrecy).
+This repository contains a Python-based framework for the simulation and verification of the **Key Relay Protocol (KRP)**, a cryptographic protocol designed to extend the reach of secure communication networks like Quantum Key Distribution (QKD) systems. The framework exhaustively tests the protocol's security properties on small, undirected graphs against a defined adversarial model.
 
 ## Table of Contents
-1. [Core Concepts](#core-concepts)
-   - [The Network Model](#the-network-model)
-   - [The Key Relay Protocol](#the-key-relay-protocol)
-   - [The Adversarial Model](#the-adversarial-model)
-2. [Mathematical Foundations](#mathematical-foundations)
-   - [Soundness Condition](#soundness-condition)
-   - [Secrecy Condition](#secrecy-condition)
-3. [Framework Components](#framework-components)
+1. [Mathematical Foundations](#mathematical-foundations)
+   - [Network Model](#network-model)
+   - [The Protocol](#the-protocol)
+   - [Adversarial Model](#adversarial-model)
+   - [Security Conditions](#security-conditions)
+2. [Framework Components](#framework-components)
    - [`krp.py` - The Simulation Engine](#krppy---the-simulation-engine)
    - [`test_krp.py` - The Testing Suite](#test_krppy---the-testing-suite)
-4. [How to Run](#how-to-run)
+3. [How to Run](#how-to-run)
    - [Running the Simulation](#running-the-simulation)
    - [Running the Tests](#running-the-tests)
 
 ---
 
-## Core Concepts
+## Mathematical Foundations
 
-The framework is built around three core concepts: the network structure, the protocol itself, and the adversary who attempts to break it.
+The security of the KRP is analyzed using concepts from graph theory and linear algebra over the finite field of two elements, GF(2).
 
-### The Network Model
+### Network Model
 
 The communication network is modeled as a simple, undirected graph:
 
-**G = (V, E)**
+$$ G = (V, E) $$
 
 - **V**: A set of nodes, representing users or network relays.
-- **E**: A set of edges, representing communication links between nodes.
+- **E**: A set of edges, representing secure communication links (e.g., QKD links) where local keys can be established.
 
-### The Key Relay Protocol
+### The Protocol
 
-The KRP enables two users, `u1` and `u2`, to establish a shared secret key by leveraging the network's relay nodes.
+The KRP enables a user pair, $(u_1, u_2)$, to establish a shared secret key by leveraging the network's relay nodes.
 
-The protocol proceeds in two main steps:
+1.  **Local Key Generation**: For each edge $e \in E$, a random local key $k_e \in \{0, 1\}$ is generated and shared securely between the two nodes connected by $e$. All operations are performed in GF(2), where addition corresponds to the XOR operation.
 
-1.  **Local Key Distribution**: A random local key, `k_e`, is generated for each edge `e` in the network. In this implementation, these keys are single bits (elements from the finite field GF(2)).
+2.  **Shared Key Computation**: The user pair finds a path $P$ between $u_1$ and $u_2$. A path is a sequence of edges, $P = \{e_1, e_2, ..., e_m\}$. The final shared key, $K$, is computed by XORing the local keys of all edges along this path:
 
-2.  **Shared Key Computation**: The user pair `(u1, u2)` computes their shared key, `K`, by finding a path between them and combining the local keys along that path. The combination operation is the bitwise XOR (exclusive OR).
+    $$ K = \bigoplus_{e \in P} k_e = k_{e_1} \oplus k_{e_2} \oplus ... \oplus k_{e_m} $$
 
-    For a path `P` consisting of edges `{e_1, e_2, ..., e_m}`, the shared key is:
+    Since the same path is used (or any two paths that form a cycle), both users arrive at the identical key $K$.
 
-    **K = k_e1 ⊕ k_e2 ⊕ ... ⊕ k_em**
+### Adversarial Model
 
-    where `⊕` denotes the XOR operation.
+An adversary is defined by the set of edges they can wiretap.
 
-### The Adversarial Model
+- **Adversary($E_A$)**: An adversary who has compromised a subset of edges $E_A \subseteq E$.
+- **Knowledge**: The adversary learns the local keys of all wiretapped edges: $\{k_e | e \in E_A\}$.
+- **Goal**: To determine the shared key $K$ established between a non-compromised user pair.
 
-An adversary is defined by the set of edges they can wiretap. 
-
-- **Adversary(E_A)**: An adversary who has access to a subset of edges `E_A ⊆ E`.
-- **Observation**: The adversary learns the local keys `{k_e | e ∈ E_A}` for all edges they have wiretapped.
-- **Goal**: The adversary's goal is to determine the shared key `K` established between a non-wiretapped user pair.
-
----
-
-## Mathematical Foundations
+### Security Conditions
 
 The correctness of the KRP rests on two fundamental properties: soundness and secrecy.
 
-### Soundness Condition
+#### Soundness
 
-**Soundness** ensures that both users in a pair successfully establish the *exact same* key.
+**Soundness** ensures that both users in a pair successfully establish the *exact same* key. The protocol is sound for a user pair $(u_1, u_2)$ if and only if they are in the same connected component of the graph $G$. If no path exists, no key can be formed.
 
-> The protocol is **sound** for a user pair `(u1, u2)` if and only if there exists at least one path in the graph `G` connecting `u1` and `u2`.
+#### Secrecy
 
-If the users are in disconnected components of the graph, they cannot compute a key, and the protocol fails for that pair.
+**Secrecy** ensures that the adversary gains zero information about the final shared key. This is analyzed using linear algebra over GF(2).
 
-### Secrecy Condition
+- Let the set of all edges $E$ form a basis for a vector space of dimension $|E|$. Each edge $e_i$ is a basis vector.
+- The user's path $P$ can be represented as a **path vector**, $\vec{p}$, where the $i$-th component is 1 if $e_i \in P$ and 0 otherwise.
+- The adversary's knowledge corresponds to a **subspace**, $W$, spanned by the basis vectors of the wiretapped edges in $E_A$.
 
-**Secrecy** ensures that the adversary cannot gain any information about the final shared key, even with knowledge of the wiretapped local keys.
+Information-theoretic secrecy holds if and only if the path vector $\vec{p}$ is linearly independent of the adversary's subspace $W$. Mathematically:
 
-Let's represent the graph's structure using linear algebra over the finite field `GF(2)`.
+$$ \vec{p} \notin \text{span}(E_A) $$
 
-- Each edge `e_i` can be represented as a standard basis vector in an `|E|`-dimensional vector space.
-- A path `P` is the sum of the vectors of the edges it contains.
-- The adversary's knowledge can be represented as a subspace, `W`, spanned by the vectors of the wiretapped edges `E_A`.
+This is equivalent to checking if the rank of the adversary's subspace increases when the path vector is added to its basis:
 
-> The key `K` is **information-theoretically secret** if the path vector `P` is linearly independent of the adversary's subspace `W`. Mathematically:
+$$ \text{rank}(\{\vec{e} | e \in E_A\} \cup \{\vec{p}\}) = \text{rank}(\{\vec{e} | e \in E_A\}) + 1 $$
 
-> **P ∉ span(E_A)**
-
-In simpler terms, secrecy holds if the adversary cannot reconstruct the path's key by XORing together any combination of the keys they have observed. This is guaranteed if the path `P` does not form a cycle with any subset of the wiretapped edges `E_A`.
-
-*Note: The current implementation in `krp.py` has a placeholder for the secrecy check (`secrecy = True`). A full verification would involve checking this linear independence condition.*
+If the rank does not increase, the path vector can be constructed from the adversary's known vectors, and the key is compromised. The implementation in `krp.py` uses a helper function, `_rank_gf2`, to perform this rank comparison over GF(2) and verify secrecy.
 
 ---
 

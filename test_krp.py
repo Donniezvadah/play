@@ -42,5 +42,23 @@ class TestKRP(unittest.TestCase):
         result = simulate_krp(G, user_pairs, adversary, key_length=2, verbose=False)
         self.assertIn('observed keys', str(result['log']))
 
+    def test_secrecy_holds(self):
+        # Path is not in adversary's subspace
+        G = nx.path_graph(4)  # 0-1-2-3
+        user_pairs = [UserPair(0, 3)]
+        adversary = Adversary({(1, 2)})  # Wiretap middle edge
+        result = simulate_krp(G, user_pairs, adversary, verbose=False)
+        self.assertTrue(result['sound'])
+        self.assertTrue(result['secrecy'])
+
+    def test_secrecy_breached(self):
+        # Path is a subset of adversary's wiretapped edges
+        G = nx.path_graph(3)  # 0-1-2
+        user_pairs = [UserPair(0, 2)]
+        adversary = Adversary({(0, 1), (1, 2)})  # Wiretap the whole path
+        result = simulate_krp(G, user_pairs, adversary, verbose=False)
+        self.assertTrue(result['sound'])
+        self.assertFalse(result['secrecy'])
+
 if __name__ == "__main__":
     unittest.main()

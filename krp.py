@@ -11,6 +11,7 @@ import itertools
 import networkx as nx
 import random
 from typing import List, Tuple, Set, Dict
+import numpy as np
 
 # ----------------------------
 # Data Structures
@@ -57,6 +58,34 @@ def enumerate_all_graphs(n_nodes: int) -> List[nx.Graph]:
     return graphs
 
 # ----------------------------
+# Helper for GF(2) linear algebra
+# ----------------------------
+
+def _rank_gf2(M):
+    """Calculates the rank of a binary matrix over GF(2)."""
+    if not M.any():
+        return 0
+    
+    mat = M.copy().astype(int)
+    rows, cols = mat.shape
+    rank = 0
+    pivot_row = 0
+
+    for j in range(cols):
+        if pivot_row < rows:
+            i = pivot_row
+            while i < rows and mat[i, j] == 0:
+                i += 1
+            
+            if i < rows:
+                mat[[i, pivot_row]] = mat[[pivot_row, i]]
+                for k in range(rows):
+                    if k != pivot_row and mat[k, j] == 1:
+                        mat[k] = (mat[k] + mat[pivot_row]) % 2
+                pivot_row += 1
+    return pivot_row
+
+# ----------------------------
 # KRP Protocol Simulation (Skeleton)
 # ----------------------------
 
@@ -99,8 +128,51 @@ def simulate_krp(
 
     # Step 4: Verification (soundness, secrecy)
     sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
-    secrecy = True  # Placeholder: needs info-theoretic check
-    # TODO: Implement detailed secrecy verification
+    # Step 4: Verification (soundness, secrecy)
+    sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
+
+    # Information-theoretic secrecy verification
+    secrecy = True
+    if sound:  # Secrecy is only meaningful if a key was established
+        edge_to_idx = {edge: i for i, edge in enumerate(G.edges())}
+        num_edges = len(G.edges())
+
+        # Create a basis matrix for the adversary's subspace
+        adversary_basis = []
+        for edge in adversary.wiretapped_edges:
+            if edge in edge_to_idx:
+                vec = np.zeros(num_edges, dtype=int)
+                vec[edge_to_idx[edge]] = 1
+                adversary_basis.append(vec)
+        
+        adversary_matrix = np.array(adversary_basis)
+
+        for up in user_pairs:
+            try:
+                path_nodes = nx.shortest_path(G, up.node1, up.node2)
+                path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) for i in range(len(path_nodes)-1)}
+
+                path_vec = np.zeros(num_edges, dtype=int)
+                for edge in path_edges:
+                    if edge in edge_to_idx:
+                        path_vec[edge_to_idx[edge]] = 1
+
+                # Check for linear independence over GF(2) using rank test.
+                # If rank increases when path_vec is added, it's independent.
+                rank_before = _rank_gf2(adversary_matrix)
+                
+                augmented_matrix = np.vstack([adversary_matrix, path_vec]) if adversary_matrix.any() else path_vec.reshape(1, -1)
+                rank_after = _rank_gf2(augmented_matrix)
+
+                if rank_after == rank_before:
+                    secrecy = False
+                    log.append(f"SECRECY BREACH: Path for UserPair ({up.node1},{up.node2}) is in adversary's subspace.")
+                    break
+
+            except nx.NetworkXNoPath:
+                pass
+    else:
+        secrecy = True
 
     result = {
         "graph": G,
