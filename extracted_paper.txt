@@ -1,0 +1,3791 @@
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+Quantum Internet
+
+Received 24 May 2023; revised 24 July 2023; accepted 16 August 2023; date of publication 28 August 2023;
+date of current version 13 November 2023.
+
+Digital Object Identiﬁer 10.1109/TQE.2023.3309590
+
+Advantage of the Key Relay Protocol
+Over Secure Network Coding
+
+GO KATO1
+1National Institute of Information and Communications Technology (NICT), Tokyo 184-8795, Japan
+2Mitsubishi Electric Corporation, Information Technology R&D Center, Kanagawa 247-8501, Japan
+
+, MIKIO FUJIWARA1
+
+, AND TOYOHIRO TSURUMARU2
+
+Corresponding author: Go Kato (e-mail: go.karto.314@gmail.com)
+
+The work of Go Kato was supported in part by the Japan Society for the Promotion of Science Kakenhi (C) under Grant 20K03779 and
+Grant 21K03388 and by JST CREST Grant Number JPMJCR2113, Japan. The work of Mikio Fujiwara and Toyohiro Tsurumaru was
+supported in part by the Ministry of Internal Affairs and Communications, Japan. ICT Priority Technology Research and Development
+Project under Grant JPMI00316.
+
+ABSTRACT The key relay protocol (KRP) plays an important role in improving the performance and
+the security of quantum key distribution networks. On the other hand, there is also an existing research
+field called secure network coding (SNC), which has similar goal and structure. In this article, we analyze
+differences and similarities between KRPs in general and key relay using SNC schemes (KRPs-by-SNC)
+rigorously. We found, rather surprisingly, that there is a definite gap in security between KRPs in general
+and KRPs-by-SNC; that is, certain KRPs achieve better security than any SNC schemes on the same graph.
+We also found that this gap can be closed if we generalize the notion of SNC by adding authenticated
+public channels; that is, KRPs are equivalent to KRPs-by-SNC schemes augmented with authenticated public
+channels.
+
+INDEX TERMS Communication networks, network coding, quantum key distribution.
+
+I. INTRODUCTION
+A quantum key distribution (QKD) link realizes distribution
+of secret keys to players at distant locations (see, e.g., [1]
+and [2]). However, the key distribution length achievable by
+a single QKD link is limited by the technological level of
+quantum optics [2]. The key relay protocol (KRP) plays an
+important role in improving the performance and the security
+of QKD networks [3], [4], [5], [6] for an expanding service
+area. KRPs are used to enable key distribution beyond such
+limitation of a single QKD link. The basic idea of the KRP is
+to pass a secret key of one QKD link on to another QKD link
+with the help of insecure public channels, such as the internet
+(cf., Figs. 2 and 3). The simplest type of KRPs are those
+using trusted nodes only, and they have been used in several
+QKD testbeds in the world [7], [8], [9], [10]. In Japan, Tokyo,
+the QKD Network has operated since 2010, and secure data
+transfer, storage, and secondary use have been demonstrated.
+Such KRPs, based on trusted nodes, are standardized in
+ITU-T [6]. In order to improve the convenience of QKD
+networks further, it is important to research and develop se-
+cure and efficient KRPs. To this end, some articles proposed
+improved schemes by reinterpreting the KRP as a secure data
+relay technique over nodes. In particular, KRPs using secure
+network coding (SNC) indeed turned out useful (see, e.g.,
+[11] and [12]).
+
+We note that KRPs as well as our results in the follow-
+ing can also be applied to networks of any information the-
+oretically secure key sources, besides QKD. For example,
+they can be applied to key sources utilizing physical layer
+security [13].
+
+The goal of this article is to rigorously analyze if there
+is a difference between such KRPs using SNC (henceforth,
+KRPs-by-SNC) and KRPs in general. This question is impor-
+tant for the following reason. The KRP and SNC are similar
+in many aspects. SNC has been studied in much greater depth
+than the KRP. If the KRP and SNC were not only similar but
+equivalent, there would be no need to study the KRP, because
+one could simply import the vast results of SNC into the KRP.
+This question can be elaborated as follows. The KRP has
+similarities and differences with SNC (see Table 1). Namely,
+while they share the same goal of sharing secret messages,
+they differ in the following.
+
+1) Public channels are available in KRPs, but not in SNC
+
+schemes.
+
+2) KRPs use QKD links (or more generally, local key
+sources), while SNC schemes use secret channels.
+3) In KRPs senders’ role is to send secret keys, which are
+random bits, while in SNC schemes, they can freely
+choose their messages.
+
+VOLUME 4, 2023
+
+© 2023 The Authors. This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License.
+For more information, see https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+TABLE 1 Similarities and Differences Between the KRP, the Conventional SNC, SNC With Public Channels, and KRP-by-SNC
+
+FIG. 1. Inclusion relation of KRPs in general, and KRPs based on SNC
+schemes (KRPs-by-SNC). In this article, SNC schemes refer to those
+without public channels unless otherwise stated. The settings and the
+goals of KRP-by-SNC and the KRP are summarized in Table 1. The security
+of KRPs in general is better than that of KRPs-by-SNC (see Theorem 2).
+
+FIG. 2. Simplest example of the KRP. On each edge ei , there is a local
+∈R {0, 1} to both
+, which distributes a random bit rei
+key source LKSei
+ends. Each node can also use public channels freely. User pair u1, u2
+wishes to share a relayed key k = (k1, k2 ). To this end, the midpoint v
+announces (cid:2)r = re1
+k1 = re1 and k2 = re2
+
++ re2 , and then, user u1 and u2 each calculate
++ (cid:2)r.
+
+Here, it is straightforward to see that an SNC scheme can
+always be converted to a KPR-by-SNC, by restricting the
+messages of the SNC scheme to random keys. The nontrivial
+question naturally is whether KRPs-by-SNC thus obtained
+exhaust all KRPs in general. In other words, is it possible to
+convert KRP in general to a KRPs-by-SNC? This is the main
+question of this article. For the sake of simplicity, we will
+limit ourselves to the one-shot scenario.
+
+The outline of our results is shown in Fig. 1 (or for more
+detail see Fig. 8). If we generalize SNC [11] schemes by
+adding public channels (see the third column of Table 1),
+then KRPs and the corresponding KRPs-by-SNC (with pub-
+lic channels) on the same graph are always equivalent (see
+Theorem 1). On the other hand, if we do not generalize SNC
+and limit ourselves to its conventional form (without public
+channels; see the second column of Table 1), then there is a
+definite gap in security between the KRP and SNC: on some
+
+graphs a KRP achieves better security than any conventional
+KRPs-by-SNC (see Theorem 2 and Corollary 1). Hence, the
+accumulation of past research on the conventional SNC is not
+sufficient to explore the potential of KRPs. This suggests that
+the KRP is a new research field. In other words, clarifying
+the relationship between KRPs-by-SNC and KRPs in general
+is extremely useful in clarifying the security and efficiency
+bounds of key relay.
+
+II. KEY RELAY PROTOCOL
+A. MOTIVATION AND EXAMPLES OF THE KRP
+QKD distributes secret keys to two separate players. How-
+ever, the communication distance achievable by a single set
+of QKD devices, or a QKD link, is limited by the technolog-
+ical level of quantum optics, and is currently in the order of
+100 km [2]. For this reason, in this article, we refer to a QKD
+link also as a local key source.
+
+There is of course a strong demand to distribute secret
+keys globally, or beyond the reach of a single QKD link.
+The KRP [3], [4], [5] aims to fulfill this demand by connect-
+ing multiple QKD links, and also by using insecure public
+channels, such as the internet.
+
+Fig. 2 illustrates the simplest example of such KRPs.
+Users u1 and u2 are separated by twice the reach of a lo-
+cal key source, and are connected by two local key sources
+LKSe1 and LKSe2 . From these local key sources, users u1
+∈R {0, 1}, respec-
+and u2 receive distinct local keys re1
+tively. Then, in order for both u1 and u2 to share the same
+key k1 = k2, which we call the relayed key, they execute the
+following procedure with the help of the midpoint v.
+
+, re2
+
+1) The midpoint v announces the difference of the two
++ re2.
+2) Users u1 and u2 calculate the relayed keys k1 = re1 and
+
+local keys, (cid:2)r = re1
+
+k2 = re2
+
++ (cid:2)r, respectively.
+
+Note that k1 = k2 is indeed satisfied. Note also that ki
+
+remains secret even if the announcement (cid:2)r is revealed.
+
+This idea can be generalized to more complex network
+configurations. For example, one can improve the distance
+by serially extending the aforementioned construction [see
+Fig. 3(a)], or can improve the security by extending it in
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+= rei
+
+FIG. 3. Somewhat complex examples of the KRP. (a) Serialization of
+Fig. 2. Nodes v
++ rei+1
+i each announce (cid:2)ri
+, and then, users u1 and
+n−1
+(cid:2)ri , respectively.
++
+u2 calculate relayed keys k1 = re1 and k2 = ren
+i=1
+(b) Parallelization of Fig. 2. Nodes v
+= rei1
+i each announce (cid:2)ri
+, and
+(cid:2)
+then, users u1, u2 each calculate k1 = re11
++ (cid:2)ri ).
++ re21 , k2 =
+i=1,2(re2i
+Note that the relayed key k = (k1, k2 ) remains secret here even if
+someone takes over an edge set Ei
+, rei2
+keys rei1
+than that of Fig. 2.
+
+. In this sense, we regard this construction more secure
+
+} (i = 1 or 2) and leaks local
+
++ rei2
+
+= {ei1
+
+, ei2
+
+(cid:2)
+
+parallel [see Fig. 3(b)]. In Section II-B, we will give a for-
+mal definition of KRPs, applicable to an arbitrary network
+configuration.
+
+B. FORMAL DEFINITION OF THE KRP
+The outline is as follows: on an undirected graph G = (V, E ),
+pairs of users wish to share a relayed key with the help of
+other players on nodes V having access to local key sources
+and a public channels, without disseminating the message to
+the adversary.
+
+1) SETTING
+An undirected graph G = (V, E ) consists of a node set V and
+an edge set E. For the sake of simplicity, we assume that G
+is connected. Each node v ∈ V has an individual player (de-
+noted by the same symbol as the node), some of which con-
+stitute npair pairs of users ui = (u1
+i ) with i = 1, . . . , npair.
+i
+There is also an adversary, who can wiretap some edges ⊂ E.
+Each edge e ∈ E has a local key source LKSe and a public
+
+, u2
+
+channel PCe, which behave as follows.
+
+Definition 1 (Local Key Sources and Public Channels):
+
+LKSe and PCe operate as follows.
+
+1) Local key source LKSe [see Fig. 4(a)]: On input “start”
+command from an end node v or w, it sends a local key
+or a uniformly random bit re ∈R {0, 1} to both v and
+w. When edge e is wiretapped, it also sends re to the
+eavesdropper.
+
+2) Public channel PCe [see Fig. 4(b)]: On input a bit string
+pe ∈ {0, 1}∗ from an end node, it sends pe to the other
+end node and to the adversary.
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+FIG. 4. (a) Behavior of local key source LKSe in the absence of the
+adversary, on edge e having end nodes v, w. (b) Public channel PCe on
+the same edge.
+
+FIG. 5. Behavior of secret channel SCe in the absence of the adversary.
+
+2) KEY RELAY PROTOCOL
+, u2
+With the aforementioned setting, each user pair ui = (u1
+i )
+i
+wishes to share a relayed key ki = (k1
+i ) with the help of
+i
+players V , without disseminating ki to the adversary. To this
+end, they request all nodes V to execute a procedure of the
+following type.
+
+, k2
+
+Definition 2: A protocol L of the following type, per-
+
+formed by players V , is called a KRP.
+
+1) All players V communicate using public channels PCe
+and local key sources LKSe.1 Here, each LKSe can
+only be used once, while PCe can be used arbitrarily
+many times.
+2) Each user u j
+
+i calculates a relayed key k j
+i .
+
+3) SECURITY CRITERIA
+There is a known collection E adv = {Eadv
+set Eadv
+i
+of the protocol, the adversary chooses Eadv
+taps edges e ∈ Eadv
+.
+
+, . . . } of edge
+⊂ E, which the adversary can wiretap. In each round
+∈ E adv and wire-
+
+, Eadv
+2
+
+1
+
+l
+
+Definition 3 (Security of the KRP): A KRP L is secure
+
+l
+
+against E adv, if it satisfies the following.
+
+1) Soundness: The relayed keys k1
+i
+
+, k2
+i generated by
+, u2
+i ) are equal and uniformly dis-
+i ] = 1, and Pr[K j
+= 0] =
+= K2
+i.e., Pr[K1
+i
+= 1] = 1/2. Also, k j
+i generated by different user
+
+user pair ui = (u1
+i
+tributed,
+Pr[K j
+i
+pairs are independent.
+
+i
+
+1More precisely, the outputs (pe, re, or “start”) of players V are defined as
+functions of previously received data (⊂ {pe, re|e ∈ E}) and of random vari-
+ables generated by the player. Each player sends out the outputs whenever
+necessary data are all received.
+
+VOLUME 4, 2023
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+2) Secrecy: The relayed key pairs ki = (k1
+i
+
+, k2
+
+known to the adversary even when any edge set Eadv
+E adv is wiretapped. That is, for any l, we have
+
+i ) are un-
+∈
+l
+
+I(K1, K2, . . . , Knpair
+
+; A(Eadv
+l
+
+)) = 0
+
+(1)
+
+where A(Eadv
+sary obtains by eavesdropping on edge set Eadv
+
+) denotes the information that the adver-
+
+.
+
+l
+
+l
+
+Note that following the standard notation of information
+theory, throughout this article, we write actual values in a
+lowercase alphabet, and the corresponding random variables
+in the uppercase of the same alphabet. For example, the ran-
+dom variable corresponding to the value k j
+i is represented by
+K j
+i .
+A(Eadv
+l
+
+) appearing in Definition 3 consists of local keys re
+, and of all public information pe (e ∈ E).
+
+on edges e ∈ Eadv
+
+l
+
+C. NOTES ON KRPS USED IN PRACTICAL QKD NETWORKS
+In fact, the KRP defined previously is slightly different from
+those used in actual QKD networks. In the following, we
+elaborate on their relation.
+
+1) EDGE ADVERSARY MODEL VERSUS NODE ADVERSARY
+MODEL
+In the aforementioned definition, we employed the edge ad-
+versary model (where the adversary eavesdrops on some
+edges), while in actual QKD networks, the node adversary
+model (where the adversary can eavesdrop on information
+that goes in and out of a certain edges set) is usually assumed.
+This is not really a limitation, since the former model incor-
+porates the latter: the situation where “the adversary eaves-
+drop on a node v” in the node adversary model can always
+be described as “all edges surrounding v are wiretapped” in
+the edge adversary model.
+
+2) PASSIVE ADVERSARY VERSUS ACTIVE ADVERSARY
+In the aforementioned, we assumed that the adversary is pas-
+sive (honest but curious), meaning that she eavesdrops on, but
+does not tamper with, communication. On the other hand, in
+QKD, one usually assumes that the adversary is active, i.e.,
+she can both eavesdrop on and tamper with communication.
+The easiest way to convince oneself of this limitation, of
+course, is to accept it merely as a simplification introduced
+at the first step of continuing research.
+
+On the other hand, there are also ways of justifying this
+limitation to some extent. That is, if the adversary is active,
+the following two problems arise.
+
+1) Problem with soundness: The relayed keys may not
+
+match, Pr[k1
+i
+
+(cid:5)= k2
+
+i ] > 0.
+
+2) Problem with secrecy: Players V may malfunction and
+leak extra information to the adversary, damaging the
+secrecy.
+
+But, in practical QKD networks, there are ways to solve or
+
+work around both these problems.
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+, k2
+
+a) How to work around the problem with soundness:
+The basic idea here is the following. The relayed keys ki =
+(k1
+i ) are random bits and are not meaningful by them-
+i
+selves, and thus, can be discarded at any time. Hence, even
+if the event k1
+i and
+i
+repeat new rounds the KRP (including QKD as local key
+, k2
+sources) until they obtain k1
+i . This can
+i
+generally decrease the key generation speed, but the secrecy
+remains intact.
+
+i occurs, players can discard k1
+i
+
+i satisfying k1
+i
+
+= k2
+
+(cid:5)= k2
+
+, k2
+
+Of course, in order for the aforementioned idea to actually
+function in practice, user pairs ui must be able to detect an
+error (check if k1
+i or not) with a sufficiently small fail-
+i
+ure probability. This is also realizable by using information
+theoretically secure message authentication codes (see, e.g.,
+[14, Sec. 4.6]).
+
+= k2
+
+Combining these ideas, we obtain the following method.
+
+b) User u1
+
+∈ {0, 1}n.
+
+, u2
+a) User pairs ui = (u1
+i ) repeat a KRP n times and share
+i
+, (cid:2)
+(cid:2)
+k2
+k1
+n-bit relayed keys
+i
+i
+i calculates the hash value σi = h(
+
+(cid:2)
+k1
+i using
+an ε-difference universal hash function h [14]. User u1
+i
+then encrypts σi by the one-time pad (OTP) scheme
+(see, e.g., [14]) and sends it to u2
+i . (In fact, this entire
+step corresponds to authenticating message (cid:2)k1
+i using
+[14, Construction 4.24].)
+
+(cid:2)
+k1
+i ) of
+
+c) User u2
+
+(cid:2)
+i ), u2
+k2
+
+i decrypts the received ciphertext to obtain
+σi. If σi (cid:5)= h(
+i announces that the relayed keys
+(cid:2)
+(cid:2)
+i must be discarded. (Here, u2
+k1
+k2
+i authenticates
+i and
+his announcement by again using Construction 4.24 of
+[14].)
+
+In this method, steps 2 and 3 each consume a preshared
+key2 of a length proportional to |σi|, the length of σi. How-
+ever, one can set |σi| negligibly small compared with n,
+with an appropriate choice of the function h and for suffi-
+ciently large n. Thus, the net relayed key obtained by this
+method almost equals n. For example, by using a polynomial-
+based ε-difference universal hash function, we have |σi| =
+O(ε−1 log n) with ε being the failure probability of the error
+detection.
+
+b) Countermeasure against problem with secrecy:
+As for the problem with secrecy, one countermeasure is to
+restrict ourselves with linear KRPs.
+
+Here, a linear KRP means the one where players V are
+linear. A player v ∈ V being linear means that its outputs
+pe and re are all linear functions of previously received data
+(⊂ {pe, re|e ∈ E}) and of random variables generated by the
+
+2The security proofs of QKD require that its public communication be
+authenticated. A customary way to fulfill this requirement in practical QKD
+systems is that each user pair always keeps sharing a relatively small amount
+of the secret key (preshared key), and uses it to authenticate their public
+communication, e.g., by the methods given in [14, Sec. 4.6] and [15]. Here,
+we use those preshared keys also for KRPs.
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+player. In such restricted case, we can prove the following
+lemma.
+
+Lemma 1: If a linear KRP is secure against passive (i.e.,
+honest but curious) adversaries, it is also secure against active
+adversaries.
+
+This lemma is a variant of Theorem 1 in [16], which was
+previously obtained for the SNC. As the proof is essentially
+the same as in [16], we here only give a sketch.
+
+Suppose, for example, that the active adversary modifies a
+local key re(cid:6) to re(cid:6) + (cid:2)r, which is to be input to a node v. With
+v being linear, v’s subsequent outputs all change linearly
+in (cid:2)r; for example, a public message pe, which v outputs,
+changes to pe + f ((cid:2)r) with f being a linear function. Since
+those linear responses to tampering, such as f ((cid:2)r), are all
+predictable, we can conclude that the adversary gains nothing
+by tampering with communication.
+
+Of course, this countermeasure is not applicable when one
+must use nonlinear KRPs. Such cases must be considered
+separately. In this respect, the existing literature on network
+codes resilient against active attackers, e.g., [17], would be
+helpful.
+
+III. MAIN RESULTS: RELATION BETWEEN THE KRP AND
+SNC
+As readers familiar with SNC (see, e.g., [11] and [12]) may
+have already noticed, the KRP defined in the previous section
+has similarities and differences with SNC (see Table 1). That
+is, while they both share the same goal that each sender–
+receiver pair (or each user pair) share a secret message, they
+differ in the following.
+
+1) Public channels PCe are used in the KRP, but not in
+
+SNC.
+
+2) The KRP uses local key sources LKSe, while SNC uses
+
+secret channels.
+
+3) In SNC, the sender can choose the message freely.
+However, in the KRP, the message (which we called
+the relayed key ki in the previous section) must be
+uniformly random, and thus, the sender does not have
+freedom to choose it.
+
+From this observation,
+
+the question naturally arises
+whether these differences are really essential. For example, is
+it not possible that there is actually a way of converting KRPs
+to SNC schemes, and that they are shown to be equivalent?
+In this section, we answer this question. The outline of our
+results is as follows.
+
+First, if we eliminate the aforementioned difference 1) by
+hand, that is, if we generalize SNC [11] by adding public
+channels, then we can simultaneously resolve the remaining
+differences, 2), and 3), as well. As a result of this, we can
+show that the generalized form of SNC (i.e., SNC with public
+channels, in the third column of Table 1) and the KRP are
+equivalent (see Theorem 1).
+
+On the other hand, if we do not generalize SNC and limit
+ourselves with its conventional form (the second column of
+Table 1), then there is a definite gap in security between
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+SNC and the KRP: there are situations where KRPs achieve
+better securities than the conventional SNC schemes, without
+public channels (see Theorem 2).
+
+A. DEFINITION OF SNC WITH PUBLIC CHANNELS
+We begin with a formal definition of SNC with public chan-
+nels, which is mentioned previously and corresponds to the
+third column of Table 1.
+
+The conventional SNC (the second column of Table 1)
+is the special case of this scheme where the use of public
+channels is prohibited.
+
+1) Setting
+The setting is the same as that of the KRP, given in
+Section II-B1, except the following.
+, u2
+1) Of each user pair ui = (u1
+i
+
+i ), one user (e.g., u1
+
+i ) = (ai, bi) or (u1
+i
+
+i ) is
+named the sender ai, and the other (e.g., u2
+i ) the receiver
+i ) = (bi, ai)
+, u2
+, u2
+bi. Thus, either (u1
+i
+holds.
+This nonidentical correspondence is necessary be-
+cause, in SNC, messages are not a random bit (as in
+the KRP), but must be chosen by the sender ai; see
+Definition 5.
+
+2) Local key sources LKSe are replaced by the secret
+channels SCe, defined in Definition 4 as follows.
+Definition 4 (Secret Channels): On input a bit se ∈ {0, 1}
+from one end node, secret channel SCe sends se to the other
+end node; see Fig. 5. When edge e is wiretapped, it also sends
+se to the eavesdropper.
+
+In comparison with the conventional SNC [11], the afore-
+mentioned setting differs only in that players V can use public
+channels PCe in addition to secret channels SCe (see Table 1).
+
+2) SNC With Public Channels
+The goal of our SNC with public channels is the same as
+that of the conventional SNC [11]. Each sender–receiver pair
+(ai, bi) wishes to exchange message mi with the help of
+other players on nodes V , without disseminating mi to the
+adversary.
+
+Definition 5 (SNC With Public Channels): We call a proto-
+col of the following type a SNC scheme with public channels.
+1) Each sender ai chooses a message mi ∈ {0, 1} aimed at
+
+the receiver bi.
+
+2) Players V communicate by using public channels PCe
+and secret channels SCe.3 Here, each SCe can only
+be used once, while PCe can be used arbitrarily many
+times.
+
+3) Each receiver bi calculates message ˆmi ∈ {0, 1}.
+
+In comparison with Definition 2 for the KRP, the afore-
+mentioned Definition 5 differs only in that LKSe are replaced
+
+3As in the case of the KRP, we assume that the outputs (pe, se) of players
+are defined as functions of previously received data (⊂ {pe, se|e ∈ E}) and
+of random variables generated by the player. We also assume that each player
+sends out the output whenever necessary data are all received.
+
+VOLUME 4, 2023
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+by SCe, and that senders ai can arbitrarily choose message
+mi, which need not be uniformly distributed, unlike the
+relayed key k1
+
+i (cf., Table 1).
+
+Therefore, if one wishes to analyze the potential and
+limitations of the KRP, it is necessary and sufficient to in-
+vestigate SNC with public channels.
+
+We will prove Theorem 1 in Section IV.
+
+3) Security Criteria
+The security criteria is essentially the same as Definition 3 for
+the case of the KRP. That is, there is again a known collection
+⊂ E. In each
+E adv = {Eadv
+∈ E adv
+round of the SNC scheme, the adversary chooses Eadv
+and wiretap edges e ∈ Eadv
+.
+
+, . . . } of wiretap sets Eadv
+
+, Eadv
+2
+
+1
+
+l
+
+l
+
+Definition 6 (Security of SNC With Public Channels): An
+SNC scheme L is secure against E adv, if it satisfies the fol-
+lowing.
+
+l
+
+1) Soundness: Sender ai’s message mi reaches receiver bi
+
+without error; Pr[Mi = ˆMi] = 1.
+
+2) Secrecy: Messages mi and ˆmi are unknown to the
+∈ E adv is
+
+adversary even when any edge set Eadv
+wiretapped. That is, for any l, we have
+
+j
+
+I(M1, M2, . . . , Mnpair
+
+; A(Eadv
+l
+
+)) = 0
+
+(2)
+
+l
+
+) denotes the information that the ad-
+, i.e.,
+) consists of secret bits se on edges e ∈ Eadv
+,
+
+where A(Eadv
+versary obtains by eavesdropping on edges Eadv
+A(Eadv
+l
+and of all public information pe (e ∈ E).
+
+l
+
+l
+
+In comparison with Definition 3 for
+
+the
+aforementioned Definition 6 differs in that mi need not be
+uniformly distributed (cf., Table 1), and that local keys re
+included in the adversary’s information A(Eadv
+) are replaced
+by secret bits se.
+
+the KRP,
+
+j
+
+B. SNC WITH PUBLIC CHANNELS AND THE KRP ARE
+EQUIVALENT
+SNC with public channels thus defined are in fact equivalent
+to the KRP defined in the previous section.
+
+Theorem 1 (Equivalence of SNC With Public Channels,
+and KRP): SNC schemes with public channels and KRPs
+can always achieve the same security as follows.
+
+1) Given a KRP L compatible with a graph G and user
+configuration ui = (u1
+, u2
+i ), which is secure against
+i
+wiretap sets E adv, one can construct an SNC scheme
+with public channels L(cid:6), which is compatible with the
+same G and ui, and also secure against the same E adv.
+This is true whether the sender and the receiver for each
+user pair ui in L(cid:6) are assigned as (u1
+i ) = (ai, bi) or
+i
+i ) = (bi, ai) (for the meaning of this notation, see
+(u1
+i
+Section III-A1).
+
+, u2
+
+, u2
+
+2) Given an SNC scheme L (with or without public chan-
+nels) compatible with a graph G and a sender–receiver
+configuration ui = (ai, bi), which is secure against
+E adv, one can construct a KRP L(cid:6) compatible with the
+same G and ui, which is secure against the same E adv.
+
+C. SNC WITHOUT PUBLIC CHANNELS AND THE KRP ARE
+NOT EQUIVALENT
+However, in order for the aforementioned Theorem 1 to hold,
+it was in fact essential that we generalized SNC by adding
+public channels. The equivalence with the KRP no longer
+holds if we limit ourselves with the conventional SNC, i.e.,
+SNC schemes without public channels. More precisely, we
+have the following theorem.
+
+Theorem 2 (SNC Without Public Channels (Conventional
+SNC) and KRP Are Not Equivalent): There exists a com-
+bination of a graph G, a user configuration ui, and wiretap
+sets E adv for which there exists a secure KRP LKRP, but there
+exists no secure SNC scheme without public channels.
+
+This is true whether the sender and the receiver for each
+user pair ui (in the SNC without public channels) are assigned
+i ) = (bi, ai) (for the meaning
+, u2
+i ) = (ai, bi) or (u1
+as (u1
+i
+i
+of this notation, see Section III-A1).4
+
+, u2
+
+The proof of this theorem is give in Section V.
+In short, there are situations where the KRPs achieve better
+securities than the conventional SNC. Hence, the accumula-
+tion of past research on the conventional SNC is not sufficient
+to explore the potential of the KRP. In this sense, the KRP is
+a new research field.
+
+Combining Theorems 1 and 2, we can also obtain the
+
+following corollary.
+
+Corollary 1 (The Security of SNC With Public Channels (cid:5)=
+The security of SNC Without Public Channels (Conventional
+SNC)): There exists a combination of a graph G, a user con-
+figuration ui, and wiretap sets E adv for which there exists a
+secure SNC scheme with public channel, but there exists no
+secure SNC scheme without public channels.
+
+IV. PROOF OF THEOREM 1
+To prove item 1), note that operations of LKSe can be simu-
+lated by using SCe. That is, if an end node v of edge e wishes
+to send a local key re to the other end node w, it suffices that
+v generates a random bit re ∈R {0, 1} by itself and sends it to
+w via SCe (see Fig. 6).
+
+By applying this simulation to all LKSe included in L, one
+i ) share
+i ) in the same setting as in SNC with
+
+obtains a protocol L(cid:6) where user pairs ui = (u1
+i
+relayed key ki = (k1
+, k2
+i
+the public channel, given in Section III-A1.
+
+, u2
+
+Then, by using ki thus obtained to encrypt message mi by
+the OTP encryption scheme [14], one obtains L(cid:6). Here, the
+OTP encryption scheme is the following. User u1
+i encrypts
+mi as the ciphertext ci = mi + k1
+i and sends it to u2
+i via public
+channel. Then, u2
+
+i decrypts it as ˆmi = ci + k2
+i .
+
+4It is important to note that this theorem applies even to SNC schemes
+on undirected graphs. If one is somehow allowed to limit oneself with SNC
+on directed graphs, the counterexample LKRP can be constructed straight-
+forwardly.
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+FIG. 6. Construction for simulating a local key source LKSe (Deﬁnition 1
+and Fig. 4) by using a secret channel SCe. We add a function h1
+e to an end
+node v of e (the one that would start LKSe), and regard them as a new
+node v(cid:3). The function h1
+e operates as follows: when it receives “start”
+command from v, it generates a uniformly random bit re ∈R {0, 1} and
+sends it to SCe.
+
+FIG. 7. Construction for simulating a secret channel SCe [see Deﬁnition 4
+and Fig. 5(a)] by using the local key source LKSe and the public channel
+PCe. We add a function h2
+start LKSe), and regard them as a new node v(cid:3). Function h2
+operations, namely, on receiving se from v, h2
+command to LKSe, and on receiving re from PCe, h2
+pe = se + re to PCe. Similarly, we add a function h3
+w, and regard them as a new node w(cid:3). Function h3
+receiving re from LKSe and pe from PCe, h3
+
+e to an end node v of e (the one that would
+e has two
+
+e sends out
+e to the other end node
+e has one operation: on
+
+e sends out se = re + pe to w.
+
+e sends out “start”
+
+The soundness of L(cid:6) is obvious from the construction. The
+secrecy of L(cid:6) follows from that of L, since the adversary’s in-
+formation is the same in L and L(cid:6). Indeed, in L(cid:6), the secrecy of
+re on nonwiretapped edges e is obvious by the construction,
+and thus, the security of ki from that of L. Then, the secrecy
+of mi follows from that of the OTP. This completes the proof
+of item 1 of Theorem 1.
+
+For the proof of item 2), note that SCe can be simulated by
+the local key source LKSe and the public channel PCe. When
+an end node u wishes to send a bit se to the other end node
+v, it first distributes a random bit re by switching on the local
+key source LKSe. Then, u sends se to v secretly by encrypting
+it by the OTP encryption scheme with re being the secret key
+(see Fig. 7).
+
+By applying this construction to all secret channels in-
+cluded in L, one obtains a new KRP, which we denote by
+L(cid:6). By construction, it is obvious that message mi as well as
+the adversary’s information are the same, whether in L or in
+L(cid:6). This completes the proof of item 2) of Theorem 1.
+
+V. PROOF OF THEOREM 2
+Theorem 2 asserts that the difference of structure between
+the KRP and the conventional SNC (shown in the first and
+the third columns of Table 1, and also explained in the first
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+FIG. 8. Inclusion relation of SNC schemes with and without public
+channels, KRPs, and KRPs by using SNC without public channels
+(KRPs-by-SNC).
+
+paragraph of Section III) cause a definite gap in security (see
+Fig. 1). In the following, we prove this theorem by proving a
+set of more general lemmas (see Fig. 8).
+
+That is, we introduce another new type of protocols that
+we call KRP-by-SNC (KRP by the setting of SNC without
+public channels), which corresponds to the fourth column
+of Table 1. Then, we show that secure schemes satisfy the
+relations \begin{equation*}
+
+Conventional SNC ⊆ KRP-by-SNC ⊆ KRP
+
+(Lemmas 2 and 3), as well as
+
+KRP-by-SNC (cid:5)= KRP.
+
+(Lemma 4). These two relations together assert that the KRP
+is strictly more secure than the conventional SNC, which
+completes the proof of Theorem 2.
+
+A. DEFINITION OF KRP-BY-SNC
+KRP-by-SNC (KRP by the setting of SNC without public
+channels) is a variant of SNC corresponding to the fourth
+column of Table 1. That is, it uses the same setting as in the
+conventional SNC, where players V use the secret channels
+SCe only. On the other hand, the goal is the same as in the
+KRP, where user pairs ui aim to share a random bit ki.
+
+Alternatively, KRP-by-SNC can also be considered as a
+variant of KRP, obtained by replacing the public channels
+PCe and the local key sources LKSe with the secret channels
+SCe.
+
+The formal definition of KRP-by-SNC is as follows.
+
+1) Setting
+The setting is the same as that of SNC without public
+channels (the conventional SNC), except the following.
+
+1) We denote user pairs by ui = (u1
+i
+
+i ), as in the case of
+KRP. We make no distinction between the sender and
+the receiver.
+
+, u2
+
+VOLUME 4, 2023
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+We use this notation to stress that our goal here is to dis-
+i or u2
+i )
+
+tribute a random bit ki, and thus, no particular user (u1
+is entitled to choose the value ki.
+
+, u2
+
+i ) shares a uniformly random key ki = (k1
+i
+
+2) KRP-by-SNC
+The goal here is the same as that of KRP. Each user pair
+ui = (u1
+i ),
+i
+without disseminating it to the adversary. Thus, the basic
+form of the protocol should be the same as that of the KRP
+given in Definition 2. However, as the setting here is different
+(SCe are used instead of PCe and LKSe), we need to modify
+Definition 2 as follows.
+
+, k2
+
+Definition 7 (KRP-by-SNC): A protocol L of the following
+
+type, performed by players V , is called a KRP-by-SNC.
+
+1) Players V communicate by using secret channels SCe.5
+
+Here, each SCe can only be used once.
+
+2) Each user u j
+
+i calculates its relayed key k j
+i .
+
+3) Security Criteria of KRP-by-SNC
+We use the same security criteria as in the KRP, namely,
+Definition 3. However, there is a caveat here: in the present
+case of KRP-by-SNC, the adversary’s information A(Eadv
+)
+appearing in Definition 3 consists of the secret bits se on wire-
+tapped edges e ∈ Eadv
+. This is because, in KRP-by-SNC,
+l
+players V use the secret channels SCe only.
+
+l
+
+B. PROOF OF THEOREM 2
+The following two lemmas assert that the security of KRP-
+by-SNC is between those of SNC and KRP.
+
+Lemma 2 (Secure Conventional SNC ⊆ Secure KRP-by-
+SNC): KRP-by-SNCs can always achieve the same security
+as the conventional SNC schemes. That is, given a con-
+ventional SNC scheme L compatible with a graph G and
+a sender–receiver configuration ui = (ai, bi) that is secure
+against wiretap sets E adv, one can construct a KRP-by-SNC
+L(cid:6) compatible with the same G and ui that is secure against
+the same E adv.
+
+Proof: KRP-by-SNC L(cid:6) can be realized by letting the
+sender ai of SNC L choose a random bit ki and send it out as
+a message mi. It is straightforward to verify that the security
+of L(cid:6), defined in Section V-A2, follows from the security of
+(cid:2)
+L, defined in Section III-A3.
+Lemma 3 (Secure KRP-by-SNC ⊆ Secure KRP): KRP can
+always achieve the same security as KRP-by-SNC. That is,
+given a KRP-by-SNC L compatible with a graph G and a user
+configuration ui that is secure against wiretap sets E adv, one
+can construct a KRP L(cid:6) compatible with the same G and ui
+that is secure against the same E adv.
+
+Proof: This can be proved in the same manner as in the
+proof of item 2) of Theorem 1. By rewriting all the secret
+
+5We also assume that the outputs of players are defined as functions of
+previously received data and of random variables generated by the player,
+and that each player sends out the output whenever necessary data are all
+received.
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+FIG. 9. Subgraph Gbn is deﬁned by the black nodes and edges on the
+right-hand side. This subgraph Gbn is in fact the well-known modiﬁed
+butterﬂy network. When there are multiple copies of Gbn, we distinguish
+them as Gbn
+connect Gbn
+
+s,i by indices s, i. Gray edges are the external edges that
+s,i with another subgraph Gbn
+(cid:3) ,i
+s
+
+(cid:3) or with a user u1
+
+i or u2
+i .
+
+channels SCe appearing in KRP-by-SNC L as the OTP-
+encrypted channels using LKSe and PCe, we obtain KRP
+L(cid:6).
+(cid:2)
+According to the aforementioned Lemma 3, there still
+remains the possibility that the securities of KRP-by-SNC
+and KRP are equal. Lemma 4 as follows disproves this
+possibility.
+
+Lemma 4 (Secure KRP-by-SNC (cid:5)= Secure KRP): For a
+graph G0, a user configuration ui (defined in Section V-D),
+and the empty wiretap set E adv = {∅}, there exists a secure
+KRP LKRP (defined in Section V-E1), but there exists no
+secure KRP-by-SNC.
+
+Hence, there is a definite gap in security between KRP-
+by-SNC and KRP. Combined with Lemma 2, this also means
+that there is a definite gap in security between KRP and the
+conventional SNC, which completes the proof of Theorem 2.
+The rest of this section is devoted to the proof of
+Lemma 4. The outline of the proof is as follows. First, we
+define a graph G0 and a configuration of user pairs ui (see
+Section V-D), as well as a KRP LKRP compatible with them
+(see Section V-E1). Then, we show that LKRP is secure
+against E adv,G0 := {∅}, i.e., secure when no edge is wire-
+tapped (see Section V-E2). Then, we show that there exists
+no secure KRP-by-SNC compatible with the same G0 and ui
+even when no edge is wiretapped (see Section V-F).
+
+C. NOTATION
+For ease of notation, we will often write re and pe defined
+in Definition 1 as r[e] and p[e]. Similarly, we often write se
+defined in Definition 4 as s[e].
+
+D. DESCRIPTION OF THE GRAPH G0 AND THE USER
+CONFIGURATION ui
+1) Description Using Figures
+We define the graph G0 by a nested structure as in Figs. 9–11.
+That is, we first define a subgraph Gbn by Fig. 9, which is in
+fact the well-known modified butterfly network [18]. Then,
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+{v(5), v(1)} = e(10)
+
+edges connecting different subgraphs Gbn
+s,i
+
+{v(1)
+1,i
+
+, v(2)
+2,2i
+
+{v(3)
+s,i
+
+, v(0)
+
+s,i+1
+
+} = e(1)
+1,i
+} = e(3)
+s,i
+
+= e(2)
+2,2i
+= e(0)
+
+s,i+1
+
+and edges connecting subgraphs Gbn
+
+s,i and users us
+i
+
+{u1
+
+} = e(2)
+i+1
+1,i
+where s ∈ {1, 2}, i ∈ Z/9Z.
+
+, v(2)
+1,i
+
+, {v(1)
+2,2i
+
+, u2
+
+i+4
+
+} = e(1)
+2,2i
+
+(3)
+
+(4)
+
+(5)
+
+(6)
+
+FIG. 10. Graph G0 and the user conﬁguration ui . Subgraphs Gbn
+copies of the subgraph Gbn deﬁned in Fig. 9. Edges are wired according
+to the rule of Fig. 11.
+
+s,i are
+
+3) Notation Related With Gbn
+s,i
+In the following, for ease of notation, we will often suppress
+subscripts s and i (corresponding to one of subgraphs Gbn
+s,i), if
+it is clear from the context which subgraph Gbn
+s,i we focus on.
+Also, whenever we say a subgraph Gbn
+s,i is a sender/receiver,
+it means that a node inside Gbn
+
+s,i is a sender/receiver.
+
+E. KRP LKRP COMPATIBLE WITH G0 AND ui
+1) Construction of LKRP
+KRP LKRP consists of the following two steps.
+
+FIG. 11. Fundamental wiring rule of the graph G0 depicted in Fig. 10.
+One can reconstruct graph G0 by repeating this rule.
+
+we construct the graph G0 by connecting subgraphs6 Gbn
+users u j
+
+i , as in Figs. 10 and 11.
+
+s,i and
+
+2) Alternative Description Using Equations
+The same graph G0 = (V0, E0) and the user pairs ui =
+, u2
+(u1
+i ) can also be defined using equations, as follows.
+i
+The node set V0 consists of the user pairs us
+s,i composing subgraphs Gbn
+
+i , and of
+the nodes v(α)
+s,i, where indices
+s, i, and α are in the ranges s ∈ {1, 2}, i ∈ Z/9Z,7 and α ∈
+{0, 1, 2, 3, 4, 5}. According to this notation, we identify us
+i ,
+v(α)
+s,i , and Gbn
+s,i+9, respectively, in
+the following.
+
+s,i+9, and Gbn
+
+s,i with us
+
+i+9, v(α)
+
+The edge set E0 consists of the internal edges of subgraphs
+s,i as
+
+Gbn
+
+{v(0), v(4)} = e(4),
+
+{v(2), v(4)} = e(5),
+
+{v(0), v(3)} = e(6)
+
+{v(4), v(5)} = e(7),
+
+{v(2), v(1)} = e(8),
+
+{v(5), v(3)} = e(9)
+
+6Copies of the subgraph Gbn labeled with indices s, i.
+7We use this notation to suggest that modulo 9 is implied in arithmetic
+
+involving variable i.
+
+VOLUME 4, 2023
+
+a) First step: The goal here is that: for all s, i and β ∈
+s,i sends the local key r[e(β )
+s,i ] to the node
+
+{0, 2}, the node v(β )
+v(β+1)
+secretly.
+s,i
+
+In order to realize this task, we use the following idea. Note
+that, if secret channels SCe were available, this task could be
+realized by using the well-known modified butterfly network
+coding in each subgraph Gbn
+s,i [18]. However, since we do not
+have secret channels SCe in the present setting, we emulate
+them with the OTP encryption using local keys supplied by
+LKSe and with public communication on PCe (as we did in
+the proof of Theorem 1; also see Fig. 7). Namely, whenever
+a node v(α) wishes to secretly transmit a bit r to an adjacent
+node v(α(cid:6) ), it encrypts r using the key supplied by LKSe on
+the edge e between v(α) and v(α(cid:6) ), and sends it to v(α(cid:6) ) via
+the public channel PCe. In the following, we often write this
+emulated secret transmission as v(α) → v(α(cid:6) ) : r.
+
+Due to this idea and notation, our first step of LKRP takes
+
+the following form (see Fig. 12):
+
+v(0) → v(3) : r[e(0)]
+
+v(0) → v(4) : r[e(0)]
+
+v(2) → v(1) : r[e(2)]
+
+v(2) → v(4) : r[e(2)]
+
+v(4) → v(5) : r[e(0)] ⊕ r[e(2)]
+
+v(5) → v(1) : r[e(0)] ⊕ r[e(2)]
+
+v(5) → v(3) : r[e(0)] ⊕ r[e(2)]
+
+(7)
+
+(8)
+
+(9)
+
+(10)
+
+(11)
+
+(12)
+
+(13)
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+FIG. 12. First step of LKRP, given in Section V-E1a. This is essentially the
+same as the well-known modiﬁed butterﬂy network coding.
+
+and v(1) and v(3) obtain the values (r[e(0)] ⊕ r[e(2)]) ⊕
+r[e(2)] and (r[e(0)] ⊕ r[e(2)]) ⊕ r[e(0)], respectively.
+
+, u2
+
+b) Second step: Next, using the local keys r[e(β )
+
+s,i ] thus
+obtained, each user pair ui = (u1
+i ) shares a relayed key.
+i
+They do this by performing the serial KRP of Fig. 3(a), on
+a straight path consisting of edges v(3)
+2,2i, and
+v(1)
+2,2i+1.
+Namely, the nodes in the middle of the path announce
+r[e(0)
+1,i ] ⊕ r[e(2)
+1,i+8] ⊕ r[e(0)
+2,2i],
+1,i ],
+2,2i+1],
+2,2i+1] ⊕ r[e(1)
+2,2i+1], and then, the user u2
+i obtains the
+1,i+8] by summing up the published bits and the local
+2,2i+1].
+
+r[e(2)
+and r[e(0)
+bit r[e(2)
+key r[e(1)
+
+2,2i] ⊕ r[e(0)
+
+1,i+8, v(1)
+
+1,i , v(3)
+
+r[e(2)
+
+2) Security of LKRP
+From the aforementioned construction, we immediately have
+the following lemma.
+
+Lemma 5 (Security of LKRP): The KRP LKRP is secure
+
+against wiretap sets E adv,G0 = {∅}.
+
+Proof: We give a detailed proof in Appendix. The basic
+
+idea of the proof is as follows.
+
+The security (the secrecy and the soundness) of the em-
+ulated secret channels used in the first step is obvious by
+construction, and thus, the security of the local key r[e(β )
+s,i ]
+is guaranteed by that of the modified butterfly network cod-
+ing. The security of the serial KRP is also obvious by con-
+struction. These two facts together guarantee the security of
+(cid:2)
+LKRP.
+
+F. PROOF THAT THERE EXISTS NO SECURE KRP-BY-SNC
+COMPATIBLE WITH G0 AND ui
+Lemma 4 asserts that there exists no secure KRP-by-SNC
+compatible with G0 and ui defined previously, even when no
+edge is wiretapped. In the following, we prove this assertion
+by first supposing that such KRP-by-SNC exists, and then,
+deriving a contradiction.
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+In order to describe the contradiction, it is convenient to
+number edges e according to the time when the secret channel
+SCe is used. Obviously, such numbering is possible for any
+KRP-by-SNC. Formally, this numbering is equivalent to the
+following total order ≺.
+
+Definition 8 (Total Order ≺ of Edges): Given a KRP-by-
+SNC L on a graph G = (V, E ), we write e ≺ e(cid:6) (e ∈ E is
+smaller than e(cid:6) ∈ E) if the secret channel SCe is used before
+SCe(cid:6) is used in L.
+
+Now, if we suppose that there exists a secure KRP-by-SNC
+L0 (compatible with G0, ui, and E adv = {∅}), L0 must satisfy
+the condition of the following lemma.
+
+Lemma 6: If a KRP-by-SNC L0 compatible with G0 and
+ui is secure against E adv = {∅}, then at least one of subgraphs
+⊂ G0 must satisfy the following four requirements.
+Gbn
+s,i
+
+s,i and e(β+1)
+edges e(β )
+s,i
+completely correlated, i.e., I(S[e(β )
+
+R1 For β ∈ {0, 2} each, the secret bits conveyed on the
+are completely random and
+s,i ]; S[e(β+1)
+]) = 1.
+is independent of that on e(2)
+s,i ,
+
+s,i
+
+R2 The secret bit on e(0)
+s,i
+s,i ]; S[e(2)
+s,i ]) = 0.
+R3 For β ∈ {0, 2} each, Gbn
+
+i.e., I(S[e(0)
+
+s,i is the sender of the larger
+.
+
+s,i and e(β+1)
+
+edge of e(β )
+R4 Gbn
+s,i is the receiver of the second largest edge in the set
+{e(α)
+s,i
+
+}α∈{0,1,2,3}.
+
+s,i
+
+We will prove this lemma in Section V-G.
+However, we can also show that no KRP-by-SNC can
+
+satisfy such condition.
+
+Lemma 7: In any KRP-by-SNC L0 compatible with G0
+s,i can satisfy the four requirements
+
+and ui, no subgraph Gbn
+R1, . . . , R4 of Lemma 6 simultaneously.
+
+This is a contradiction, and thus, a secure L0 cannot exist.
+
+This completes the proof of Lemma 4.
+
+Proof of Lemma 7: We suppose that one of subgraphs Gbn
+s,i
+
+satisfies R1, . . . , R4, and derive a contradiction.
+Below, as we concentrate on one such Gbn
+
+s,i satisfying
+R1, . . . , R4, we omit subscripts s, i for ease of notation,
+on the subgraph Gbn
+s,i . Also, as
+KRP-by-SNC here uses only one type of channels, SCe, we
+will often identify an edge e with the secret channel SCe.
+
+s,i , and nodes v(α)
+
+s,i, edges e(α)
+
+First note that
+
+the pair of the two largest edges in
+{e(α)}α∈{0,1,2,3} must either be e(0) and e(1), or be e(2) and
+e(3). This is because if it is not the case, then R3 says that
+Gbn(= Gbn
+s,i) is the sender of the second largest edge, but this
+contradicts R4. Thus, out of 6! types as the order of e(0), e(1),
+e(2), and e(3), it is sufficient to consider only eight types that
+satisfy the aforementioned condition.
+
+Conditions R1, · · · , R4 as well as the structure of the sub-
+graph Gbn are invariant under transpositions (e(0) ↔ e(1) and
+e(2) ↔ e(3)) and (e(0) ↔ e(2) and e(1) ↔ e(3)). Hence, there
+is a contradiction in the case of e(0) ≺ e(1) ≺ e(2) ≺ e(3), if
+and only if there exists a contradiction in all of other three
+cases e(1) ≺ e(0) ≺ e(3) ≺ e(2), e(2) ≺ e(3) ≺ e(0) ≺ e(1), and
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+e(3) ≺ e(2) ≺ e(1) ≺ e(0). Similarly, there is a contradiction in
+the case of e(1) ≺ e(0) ≺ e(2) ≺ e(3), if and only if there exists
+a contradiction in all of other three cases e(0) ≺ e(1) ≺ e(3) ≺
+e(2), e(2) ≺ e(3) ≺ e(1) ≺ e(0), and e(3) ≺ e(2) ≺ e(0) ≺ e(1).
+
+Therefore, we only have to consider the two cases
+
+Case 1) e(b) ≺ e(1−b) ≺ e(2) ≺ e(3);
+
+where b = 0 or 1 and derive a contradiction. Due to R1
+
+and R2, we have
+
+2) I(S[e(0)]; S[e(1)]) = 1;
+3) I(S[e(2)]; S[e(3)]) = 1;
+4) I(S[e(0)]; S[e(2)]) = 0.
+
+Gbn must be the sender of edges e(1−b) and e(3) due to R3,
+
+and the receiver of e(2) due to R4. Thus, we have
+
+5) v(1−b) is the sender of e(1−b);
+6) v(2) is the receiver of e(2);
+7) v(3) is the sender of e(3).
+
+From the aforementioned relations 1),. . . ,7), we can also
+
+prove the following two relations:
+
+8) there exists a series of edges connecting v(0) and v(1)
+inside Gbn (e.g., e(4), e(7), and e(10)) that are all smaller
+than e(1−b);
+
+9) there exists a series of edges connecting v(2) and v(3)
+inside Gbn (e.g., e(5), e(7), and e(9)) that are all larger
+than e(2) and all smaller than e(3).
+
+However, these two relations contradict each other, and
+
+thus, Lemma 7 is proved.
+
+Item 8) is obtained as follows. In order to realize relations
+1), 2), and 5), the information of the secret bit on e(b) must
+be transferred from v(b) to v(1−b) inside Gbn before using the
+edge e(1−b). For this transfer, a series of edges connecting v(0)
+and v(1) must be used. Here, we have used the fact that there
+is no correlation between nodes before executing protocol L0.
+Item 9) is obtained as follows. Relations 2) and 4) imply
+that I(S[e(0)], S[e(1)]; S[e(2)]) = 0. Combining this fact and
+relations 1) and 6), we find, that before the secret channel
+on e(2) is used, any random variable obtained on the nodes
+{v(α)}α is independent of S[e(2)]. As a result, relations 1), 3),
+and 7) imply that the secret bit on e(2) must be transferred
+from v(2) to v(3) inside Gbn before e(3) is used (and of course
+after e(2) is used).
+
+(cid:2)
+
+G. PROOF OF LEMMA 6
+We first introduce the notion of the standard path along with
+three lemmas related with it, and then, use them to prove
+Lemma. 6
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+(cid:4)γ(cid:5)
+
+FIG. 13. Standard path i (∈ {1, . . . , 9}) consists of the ﬁve edges
+{e
+}γ∈{0,1,2,3,4}, shown in black; also, see, Section V-G1. Note that each
+i
+standard path i connects between user pair ui
+i ). Note also that
+the graph G0 of Fig. 10 is a disjoint union of these paths and subgraphs
+Gbn
+s,i (see Fig. 9), and that every subgraph Gbn
+two of these paths. As we will see in Lemma 8, in a secure KRP-by-SNC
+L0, all the secret bits S[e
+i
+equal the relayed key k j
+i , up to constants.
+
+] transferred on the standard path i must
+
+s,i are connected to exactly
+
+= (u1
+i
+
+, u2
+
+(cid:4)γ(cid:5)
+
+1) Standard Path and the Related Lemmas
+The standard path is defined as follows.
+
+Definition 9 (Standard Path e
+, u2
+
+(cid:12)γ (cid:13)
+): For each user pair ui =
+i
+i ), we define standard path i connecting them via sub-
+2,2i,
+2,2i+1) as in Fig. 13 . The standard path i consists of
+
+(u1
+i
+graphs Gbn (more precisely, subgraphs Gbn
+and Gbn
+the following five edges:
+
+1,i+8, Gbn
+
+1,i, Gbn
+
+(cid:12)0(cid:13)
+e
+i
+(cid:12)1(cid:13)
+e
+i
+(cid:12)2(cid:13)
+e
+i
+(cid:12)3(cid:13)
+e
+i
+(cid:12)4(cid:13)
+e
+i
+
+:= e(2)
+
+1,i+8
+
+:= e(3)
+
+1,i+8
+
+= e(0)
+1,i
+
+= e(2)
+2,2i
+= e(0)
+
+2,2i+1
+
+:= e(1)
+1,i
+:= e(3)
+2,2i
+:= e(1)
+
+.
+
+(14)
+
+2,2i+1
+
+(cid:12)γ (cid:13)
+We can show that all the edges e
+i
+
+on a standard path i
+convey essentially the same information, the relayed key ki.
+(cid:12)γ (cid:13)
+Lemma 8: In each standard path i, the secret bits S[e
+]
+i
+= k2
+i
+i at the end points, up to
+
+conveyed there must be equal to the relayed key k1
+i
+i and u2
+shared by the user pair u1
+constants. That is, for any i, j, and γ
+
+(cid:12)γ (cid:13)
+S[e
+i
+
+] = K j
+i
+
+(cid:12)γ (cid:13)
+⊕ d[e
+i
+
+]
+
+(15)
+
+] being constants.
+
+(cid:12)γ (cid:13)
+with d[e
+i
+
+We will prove this lemma in Section V-I.
+Further, we can also show that ki is first generated locally
+by one entity (a subgraph Gbn
+i ) on the standard
+path i, and then, repeatedly conveyed to an adjacent entity,
+
+i(cid:6),s(cid:6) or a user u j
+
+VOLUME 4, 2023
+
+4100517
+
+] on a standard
+
+(cid:4)β(cid:5)
+
+In the following, we will choose one of Gbn
+
+s,i and show how
+s,i is fixed, we omit subscripts s, i on
+
+to prove item (1). As Gbn
+the notation e(α)
+
+s,i for simplicity.
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+(cid:4)β(cid:5)
+FIG. 14. Example of the ﬂow of secret information S[e
+i
+
+path i, as stated in Lemma 9. Recall that all the secret bits S[e
+]
+i
+transferred on the standard path i must equal the relayed key k j
+i , up to
+constants (Lemma 8 and Fig. 13). In the aforementioned example, k j
+i is
+ﬁrst generated by Gbn
+. It is
+then repeatedly conveyed to an adjacent entity, until it is shared by the
+users u1
+
+(cid:4)3(cid:5)
+2,2i+1, and then, transferred via e
+i
+
+2,2i or by Gbn
+
+i at the end points.
+
+i and u2
+
+until it is shared by the users u1
+i at the end points; see
+Fig. 14. This phenomenon can be stated formally in terms of
+the ordering ≺ as follows.
+
+i and u2
+
+Lemma 9: In each standard path i, the edges are used in
+
+(cid:12)γi(cid:13)
+the following manner. Let e
+i
+
+denote the first edge used.
+
+(cid:12)γi(cid:13)
+1) Edges to the upper left of e
+i
+lower right to upper left as
+
+are used in order from
+
+(cid:12)γi(cid:13)
+e
+i
+
+(cid:12)γi−1(cid:13)
+≺ e
+i
+
+(cid:12)0(cid:13)
+≺ · · · ≺ e
+i
+
+(16)
+
+(cid:12)γ (cid:13)
+and secret bits S[e
+i
+left or upward.
+
+(cid:12)γi(cid:13)
+] on these edges besides e
+i
+
+flow
+
+(cid:12)γi(cid:13)
+2) Similarly, edges to the lower right of e
+i
+order from upper left to lower right
+
+are used in
+
+(cid:12)γi(cid:13)
+e
+i
+
+(cid:12)γi+1(cid:13)
+≺ e
+i
+
+(cid:12)4(cid:13)
+≺ · · · ≺ e
+i
+
+(17)
+
+(cid:12)γ (cid:13)
+and secret bits S[e
+i
+right or downward.
+
+(cid:12)γi(cid:13)
+] on these edges besides e
+i
+
+flow
+
+We will prove this lemma in Section V-J.
+We can also show the following lemma.
+Lemma 10: At least one of the following two conditions
+
+is false.
+
+C1 For any subgraph Gbn
+
+s,i or e(1)
+s,i
+
+s,i, e(0)
+is the smallest
+edge in the standard path containing the two edges
+e(0)
+s,i and e(1)
+s,i , when they are the two largest edges in
+{e(α)
+s,i
+
+}α∈{0,1,2,3}.
+C2 For any subgraph Gbn
+
+s,i, e(2)
+is the smallest
+edge in the standard path containing the two edges
+
+s,i or e(3)
+s,i
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+s,i and e(3)
+e(2)
+{e(α)
+s,i
+
+}α∈{0,1,2,3}.
+
+s,i , when they are the two largest edges in
+
+We will prove this lemma in Section V-K.
+
+2) Proof of Lemma 6
+From Lemma 8 (respectively, from Lemma 9), all the sub-
+graph Gbn
+s,i satisfy R1 and R2 (respectively, R3) in Lemma 6.
+Here, in order to derive R2, we used the mutual independence
+of {K j
+i
+
+}i additionally.
+
+Hence, it remains to show that R4 holds for some Gbn
+this end, we suppose that R4 does not hold for any Gbn
+derive a contradiction with Lemma 10.
+
+s,i. To
+s,i, and
+
+This is equivalent to showing, that in any subgraph Gbn
+s,i
+
+1) C1 and C2 hold if R4 does not hold.
+
+For the sake of the simplicity, we consider only the case
+of e(0) ≺ e(1) and e(2) ≺ e(3); all other cases can be shown
+similarly.
+
+Then, we divide the remaining situation into the following
+
+three cases.
+
+First, if the second largest edge in the set {e(α)}α∈{0,1,2,3}
+is e(1) or e(3), the order e(0), e(2) ≺ e(1), e(3) must be derived
+from the assumptions e(0) ≺ e(1) and e(2) ≺ e(3), i.e., item (1)
+holds.
+
+Second, if the second largest edge in the set {e(α)}α is
+e(0), we find that e(2), e(3) ≺ e(0), ≺ e(1) hold (as a result, C2
+holds) and the sender of e(0) must be Gbn
+s,i. Here, we have
+used the assumption that R4 does not hold. From this fact
+and e(0) ≺ e(1), Lemma 9 guarantees that e(0) is the smallest
+edge in the standard path where it belongs, i.e., C1 holds.
+Thus, the item (1) also holds in this case.
+
+Finally, if the second largest edge in the set {e(α)}α is e(2),
+we can also show that item (1) holds in the same way as in
+the previous case.
+
+This completes the proof of Lemma 6.
+
+H. NOTE ON NOTATION: v
+s,i AND E st
+0
+In the proofs of Lemmas 8–10 given later, we only need
+to consider communication between subgraphs Gbn
+s,i, and
+do not need to refer to communication occurring inside
+each Gbn
+s,i. Therefore, in order to simplify the presentation,
+we will often denote a subgraph Gbn
+s,i as a single node
+vs,i. For example, the edge set {u1
+, vs,i} denotes the set
+i
+, v(5)
+, v(0)
+{u1
+s,i
+s,i
+i
+Accordingly, we will also regard the graph G0 as consist-
+s,i) and ui, which we
+0 in fact consists of edges on
+
+ing of edges that connect nodes vs,i (= Gbn
+denote by Est
+0 . This edge set Est
+the standard paths i, defined in the previous section
+
+, v(2)
+s,i
+
+, v(1)
+s,i
+
+, v(4)
+s,i
+
+, v(3)
+s,i
+
+}.
+
+(cid:12)γ (cid:13)
+0 := {e
+Est
+i
+
+}i∈Z/9Z,γ ∈{0,1,2,3,4}.
+
+(18)
+
+4100517
+
+VOLUME 4, 2023
+
+(19)
+
+(20)
+
+(cid:12)4(cid:13)
+Ki = S[e
+i
+(cid:12)4(cid:13)
+for a certain constant d[e
+i
+
+].
+
+(cid:12)4(cid:13)
+] ⊕ d[e
+i
+
+]
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+I. PROOF OF LEMMA 8
+(cid:12)0(cid:13)
+1) Case of e
+i
+We divide nodes V0 into u1
+V (1)
+i
+¯V (1)
+i
+
+i and the others
+}
+:= {u1
+i
+:= V0\V (1)
+
+.
+
+i
+
+(cid:12)0(cid:13)
+Since these two sets are connected by e
+i
+be functions f ( j)
+that satisfy the relation
+(cid:2)
+
+(cid:3)
+
+i
+f (1)
+i
+
+(cid:12)0(cid:13)
+S[e
+i
+
+], {Cv}
+(cid:2)
+
+v∈V (1)
+i
+
+= K1
+i
+
+only, there must
+
+(cid:3)
+
+= K2
+i
+
+= f (2)
+i
+
+(cid:12)0(cid:13)
+S[e
+i
+
+], {Cv}
+
+v∈ ¯V (1)
+i
+
+(21)
+
+where Cv denotes all the random variables possessed by node
+v ∈ V0 before executing protocol L0. The first (last) equality
+in (21) comes from the facts that the node u1
+i ) are in the set
+V (1)
+). The second equality follows from the soundness
+i
+of L0.
+
+( ¯V (1)
+i
+
+i (u2
+
+Recall that the two sets V (1)
+
+and ¯V (1)
+i
+
+(cid:12)0(cid:13)
+are connected by e
+i
+
+i
+
+only. Also, note that from the setting of the KRP-by-SNC,
+(cid:12)0(cid:13)
+the secret bit S[e
+] must be generated locally by the sender.
+i
+Then, we have
+
+(cid:12)0(cid:13)
+I(S[e
+i
+
+], {Cv}
+
+(cid:12)0(cid:13)
+; S[e
+i
+
+], {Cv}
+
+)
+
+v∈ ¯V (1)
+i
+
+v∈V (1)
+i
+
+(cid:12)0(cid:13)
+= H(S[e
+i
+(cid:12)0(cid:13)
+Also, since S[e
+i
+
+]).
+
+] is one bit
+
+(cid:12)0(cid:13)
+H(S[e
+i
+
+]) ≤ 1.
+
+(22)
+
+(23)
+
+It remains to apply the following lemma to relations
+(21)–(23), and H(K j
+
+i ) = 1 .
+
+Lemma 11: If B, C0, and C1 are random variables, and
+
+f0 and f1 are functions, satisfying
+
+f0(B, C0) = f1(B, C1) =: A
+
+(24)
+
+H(A) ≥ I(B, C0; B, C1) = H(B)
+
+(25)
+with A ∈ A, B ∈ B where |A| = |B|, then there is a bijective
+function g such that g(A) = B.
+
+Proof of this lemma is shown in Appendix. By using this
+
+lemma, we can find a bijective function g such that
+
+(cid:2)
+
+(cid:3)
+
+(cid:12)0(cid:13)
+S[e
+i
+
+] = g
+
+K j
+i
+
+.
+
+(26)
+
+(cid:12)0(cid:13)
+In other words, we can find a certain constant values d[e
+i
+Z2 such that the relation
+
+] ∈
+
+K j
+i
+
+(cid:12)0(cid:13)
+= S[e
+i
+
+(cid:12)0(cid:13)
+] ⊕ d[e
+i
+
+]
+
+(27)
+holds for i ∈ Z/9Z and j ∈ {1, 2}. When we apply the
+aforementioned Lemma 11, we have substituted K j
+],
+{Cv}
+into A, B, C0, and C1 in Lemma,
+v∈V (1)
+i
+respectively.
+
+(cid:12)0(cid:13)
+i , S[e
+i
+
+, and {Cv}
+
+v∈ ¯V (1)
+i
+
+Note, that from the constraint of soundness K1
+i , we
+i
+i hereafter. Therefore,
+
+do not have to discriminate K1
+we abbreviate the K j
+
+i and K2
+i into Ki in the following.
+
+= K2
+
+VOLUME 4, 2023
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+(cid:12)4(cid:13)
+2) Case of e
+i
+This case can be shown completely in the same manner as
+(cid:12)0(cid:13)
+the case of e
+i
+
+. We have the relation
+
+(28)
+
+. We define
+
+(cid:12)2(cid:13)
+, e
+i
+
+(cid:12)1(cid:13)
+(cid:12)3(cid:13)
+3) Cases of e
+, and e
+i
+i
+(cid:12)0(cid:13)
+First, we use the same idea as in the case of e
+i
+the sets
+V (3)
+i
+
+:= {u1
+
+, u1
+
+, u2
+
+, u2
+
+i+2
+
+i+8
+
+i+4
+
+, u2
+i+1
+v1,i, v1,i+1, v2,2i+8, v2,2i, v2,2i+1, v2,2i+2} (29)
+
+, u2
+i
+
+i+5
+
+,
+
+V (4)
+i
+
+V (5)
+j
+
+V (6)
+i
+
+:= {u1
+
+i+2
+
+, u2
+
+, u1
+
+, u1
+
+, u2
+i+1
+i
+v1,i, v1,i+1, v1,i+2, v2,2i, v2,2i+1, v2,2i+2}
+
+, u2
+
+i+3
+
+i+4
+
+i+5
+
+,
+
+(30)
+
+:= {u1
+
+i+4
+
+i+3
+
+i+2
+
+, u2
+
+, u1
+
+, u1
+
+, u2
+i+1
+i
+v1,i, v1,i+1, v1,i+2, v2,2i, v2,2i+1, v2,2i+2, v2,2i+4}
+(31)
+
+, u2
+
+, u2
+
+i+5
+
+i+6
+
+,
+
+:= {u1
+
+i+2
+
+, u2
+
+, u1
+
+, u1
+
+, u2
+i+1
+i
+v1,i, v1,i+1, v1,i+5, v2,2i, v2,2i+1, v2,2i+2}
+
+, u2
+
+i+6
+
+i+4
+
+i+5
+
+,
+
+(32)
+
+i
+
+.
+
+and ¯V (μ)
+i
+
+:= V0\V (μ)
+Since the two sets V (3)
+i
+(cid:12)2(cid:13)
+(cid:12)3(cid:13)
+(cid:12)1(cid:13)
+(cid:12)1(cid:13)
+i+4, and e
+i+1, e
+, e
+i+2, e
+e
+i
+function g(3,i)
+(cid:2)
+
+(cid:12)3(cid:13)
+i+8, e
+
+and ¯V (3)
+are connected only by
+i
+(cid:12)2(cid:13)
+i+5, there exists a bijective
+
+(cid:3)
+
+], S[e
+
+(cid:12)2(cid:13)
+i+5]
+
+(cid:12)1(cid:13)
+i+2], S[e
+
+(cid:12)3(cid:13)
+i+8], S[e
+
+(cid:12)1(cid:13)
+(cid:12)2(cid:13)
+(cid:12)3(cid:13)
+i+4], S[e
+i+1], S[e
+S[e
+i
+= g(3,i) (Ki, Ki+1, Ki+2, Ki+4, Ki+5, Ki+8) .
+(33)
+Similarly, we have bijective functions g(μ,i) for μ ∈ {4, 5, 6}
+and i ∈ Z/9Z such that
+(cid:12)1(cid:13)
+S[e
+i
+
+(cid:12)3(cid:13)
+i+1], S[e
+= g(4,i) (Ki, Ki+1, Ki+2, Ki+3, Ki+4, Ki+5)
+
+(cid:12)2(cid:13)
+i+2], S[e
+
+(cid:12)1(cid:13)
+i+3], S[e
+
+(cid:12)3(cid:13)
+i+4], S[e
+
+(cid:12)2(cid:13)
+i+5]
+
+], S[e
+
+(cid:2)
+
+(cid:3)
+
+(cid:2)
+
+(cid:12)1(cid:13)
+S[e
+i
+
+], S[e
+
+(cid:12)3(cid:13)
+(cid:12)3(cid:13)
+(cid:12)1(cid:13)
+i+1],
+i+4], S[e
+i+3], S[e
+(cid:3)
+(cid:12)2(cid:13)
+(cid:12)3(cid:13)
+(cid:12)3(cid:13)
+i+2], S[e
+i+6], S[e
+i+5]
+
+S[e
+
+(cid:2)
+
+= g(5,i) (Ki, Ki+1, Ki+2, Ki+3, Ki+4, Ki+5, Ki+6)
+(cid:12)1(cid:13)
+i+5], S[e
+
+(cid:12)1(cid:13)
+i+2], S[e
+
+(cid:12)1(cid:13)
+i+6], S[e
+
+(cid:12)3(cid:13)
+i+4], S[e
+
+(cid:12)1(cid:13)
+S[e
+i
+
+], S[e
+
+(cid:12)3(cid:13)
+i+1]
+
+= g(6,i) (Ki, Ki+1, Ki+2, Ki+4, Ki+5, Ki+6) .
+From these relations, we see that, for any e ∈ Est
+
+0 , random
+variable S[e] is generated by at least one of bijective functions
+on a subset of {Ki}i∈Z/9Z, i.e., (27), (28), and (33)–(36). This
+fact and the complete randomness of {Ki}i guarantee that the
+S[e] must have the maximum entropy, i.e.,
+
+H(S[e]) = 1.
+
+(37)
+
+4100517
+
+(34)
+
+(35)
+(cid:3)
+
+(36)
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+for e ∈ Est
+0 .
+
+Equations (33)–(36) allow to write the random variable
+(cid:12)1(cid:13)
+S[e
+i
+
+] in multiple expressions as follows:
+
+(cid:12)1(cid:13)
+S[e
+i
+
+] = g(4,i)
+1
+= g(4,i+6)
+2
+= g(6,i+3)
+4
+
+(Ki, Ki+1, Ki+2, Ki+3, Ki+4, Ki+5)
+
+(Ki+6, Ki+7, Ki+8, Ki, Ki+1, Ki+2)
+
+(Ki+3, Ki+4, Ki+5, Ki+7, Ki+8, Ki).
+
+(38)
+
+k
+
+Here, g(μ,i)
+(·) denotes the kth element of the list of variables
+defined by the function gμ,i(·). From the complete random-
+(cid:12)1(cid:13)
+ness of {Ki}i, S[e
+] must depend only on the intersection of
+i
+the sets as arguments of these functions
+{Ki, Ki+1, Ki+2, Ki+3, Ki+4, Ki+5, }
+∩ {Ki, Ki+1, Ki+2, Ki+6, Ki+7, Ki+8}
+∩ {Ki, Ki+3, Ki+4, Ki+5, Ki+7, Ki+8} = {Ki}.
+
+(39)
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+For these properties to hold, the following are necessary
+
+1) Random bit Ki(cid:6) is generated inside one of subgraphs
+
+s,i on the standard path i(cid:6);
+Gbn
+
+2) The value of Ki(cid:6), thus generated is conveyed repeatedly
+s,i on the same standard path i(cid:6).
+
+to adjacent subgraphs Gbn
+
+Thus the lemma holds.
+Indeed, if 1) is not true, i.e., if Ki(cid:6) is generated indepen-
+dently by two or more of Gbn
+s,i, there is a nonzero probability
+that their values differ. For other subgraphs Gbn
+s,i to be able
+to send out Ki(cid:6) thus generated, they must learn it from an
+adjacent subgraph which already knows Ki(cid:6).
+
+K. PROOF OF LEMMA 10
+We will take two steps.
+
+First, we will show that, for any order ≺, there is a subset
+
+E(cid:6) of Est
+
+0 , which satisfies the following four items.
+
+This fact and the relation (37) imply that
+
+1) The subset E(cid:6) contains the smallest edge in any
+
+(cid:12)1(cid:13)
+] = Ki ⊕ d[e
+i
+(cid:12)1(cid:13)
+for a certain constant d[e
+i
+
+(cid:12)1(cid:13)
+S[e
+i
+
+].
+
+]
+
+(40)
+
+In the same way, from the multiple representations of
+(cid:12)2(cid:13)
+S[e
+i
+
+(cid:12)2(cid:13)
+S[e
+i
+
+(cid:12)3(cid:13)
+S[e
+i
+
+(cid:12)3(cid:13)
+] and S[e
+]
+i
+] = g(3,i+5)
+5
+= g(3,i+4)
+6
+= g(4,i+7)
+5
+] = g(4,i+8)
+4
+= g(5,i+3)
+5
+= g(6,i+5)
+5
+
+(Ki+5, Ki+6, Ki+7, Ki, Ki+1, Ki+4)
+
+(Ki+4, Ki+5, Ki+6, Ki+8, Ki, Ki+3)
+
+(Ki+7, Ki+8, Ki, Ki+1, Ki+2, Ki+3)
+
+(41)
+
+(Ki+8, Ki, Ki+1, Ki+2, Ki+3, Ki+4)
+
+(Ki+3, Ki+4, Ki+5, Ki+6, Ki+7, Ki+8, Ki)
+
+(Ki+5, Ki+6, Ki+7, Ki, Ki+1, Ki+2)
+
+(42)
+
+(cid:12)γ (cid:13)
+we can find that there are certain constants d[e
+i
+the relation
+
+] such that
+
+(cid:12)γ (cid:13)
+S[e
+i
+
+(cid:12)γ (cid:13)
+] = Ki ⊕ d[e
+i
+
+]
+
+(43)
+
+hold for γ ∈ {2, 3}.
+
+Equations (27), (28), (40), and (43) prove the lemma.
+
+J. PROOF OF LEMMA 9
+Protocol L0 can be viewed as a communication protocol
+performed by the subgraphs Gbn
+
+s,i using the standard paths.
+
+In this picture, the communication between Gbn
+
+s,i satisfy the
+
+following properties.
+
+1) Subgraphs Gbn
+
+s,i are connected solely by the standard
+
+paths.
+
+2) Each standard path i(cid:6) is a straight line.
+3) All edges in the standard path i(cid:6) convey the same ran-
+
+dom bit Ki(cid:6) , up to a constant (Lemma 8).
+
+4) Random bits Ki(cid:6) are independent of each other (due to
+
+the definition of the KRP).
+
+standard path i.
+(cid:5)= E(cid:6).
+
+, e
+
+2) Est
+0
+(cid:12)γ (cid:13)
+3) When i ∈ Z/9Z is a value satisfying e
+i
+
+(cid:12)γ (cid:6)(cid:13)
+∈ E(cid:6)
+i+1
+(cid:12)3−γ (cid:13)
+for γ ∈ {1, 2} and γ (cid:6) ∈ {0, 1}, the relation e
+,
+i
+(cid:12)1−γ (cid:6)(cid:13)
+e
+i+1
+
+(cid:12)γ (cid:13)
+4) When i ∈ Z/9Z is a value satisfying e
+i
+
+(cid:12)γ (cid:6)(cid:13)
+∈ E(cid:6)
+i+5
+(cid:12)7−γ (cid:13)
+for γ ∈ {3, 4} and γ (cid:6) ∈ {2, 3}, the relation e
+,
+i
+(cid:12)5−γ (cid:6)(cid:13)
+e
+i+5
+
+∈ E(cid:6) holds.
+
+∈ E(cid:6) holds.
+
+, e
+
+Second, we will show that the existence of E(cid:6) defined
+previously and conditions C1 and C2 are incompatible for the
+order ≺ defined from a secure protocol L0.
+
+Thus, Lemma 10 holds.
+The first step is shown as follows: We constructively show
+that for any sequence {γi ∈ {0, 1, 2, 3, 4}}i∈Z/9Z, there is a
+subset that satisfies
+
+1’) ∀i,
+
+(cid:12)γi(cid:13)
+e
+i
+
+∈ E(cid:6);
+
+2)–4) such a subset is one of E (1), E (2), E (3)
+i (cid:5)= i(cid:6) ∈ Z/9Z and q ∈ {0, 1, 2} defined as follows:
+
+i,i(cid:6) , and E (4)
+
+q
+
+for
+
+(cid:12)γ (cid:13)
+E (1) := {e
+i
+(cid:12)γ (cid:13)
+E (2) := {e
+i
+⎧
+
+E (3)
+i(cid:6),i(cid:6)(cid:6) :=
+
+(cid:12)γ (cid:13)
+e
+i
+
+|i ∈ Z/9Z,
+
+γ ∈ {2, 3, 4}}
+
+γ ∈ {0, 1, 2}}
+
+|i ∈ Z/9Z,
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+
+(i = i(cid:6), γ ∈ {0, 1})
+∨(i ∈ {i(cid:6) + 1, i(cid:6) + 2, . . . , i(cid:6)(cid:6) − 1},
+
+γ = 2)
+
+∨(i = i(cid:6)(cid:6), γ ∈ {3, 4})
+∨(i ∈ {i(cid:6)(cid:6) + 1, i(cid:6)(cid:6) + 2, . . . , i(cid:6) + 4},
+
+γ ∈ {0, 1, 2, 3, 4})
+
+∨(i ∈ {i(cid:6) + 5, i(cid:6) + 6, . . . , i(cid:6)(cid:6) + 4},
+
+γ ∈ {0, 1, 2})
+
+∨(i ∈ {i(cid:6)(cid:6) + 5, i(cid:6)(cid:6) + 6, . . . , i(cid:6) + 8},
+
+γ ∈ {0, 1, 2, 3, 4})
+
+(44)
+
+(45)
+
+(46)
+
+⎫
+
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎬
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎭
+
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎨
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎩
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+⎧
+
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎨
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎩
+
+(cid:12)γ (cid:13)
+e
+i
+
+E (3)
+i(cid:6)(cid:6),i(cid:6) :=
+
+⎧
+⎨
+(cid:12)γ (cid:13)
+⎩e
+i
+
+E (4)
+q
+
+:=
+
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+(cid:8)
+
+(i = i(cid:6), γ ∈ {3, 4})
+∨(i ∈ {i(cid:6) + 1, i(cid:6) + 2, . . . , i(cid:6)(cid:6) − 1},
+
+γ ∈ {0, 1, 2, 3, 4})
+
+∨(i = i(cid:6)(cid:6), γ ∈ {0, 1})
+∨(i ∈ {i(cid:6)(cid:6) + 1, i(cid:6)(cid:6) + 2, . . . , j(cid:6) + 4},
+
+∨(i ∈ {i(cid:6) + 5, i(cid:6) + 6, . . . , i(cid:6)(cid:6) + 4},
+
+γ ∈ {2, 3, 4})
+
+∨(i ∈ {i(cid:6)(cid:6) + 5, i(cid:6)(cid:6) + 6, . . . , i(cid:6) + 8},
+
+γ = 2)
+
+γ = 2)
+
+(i ≡ q mod 3, γ ∈ {0, 1})
+
+∧ (i ≡ q + 1 mod 3, γ ∈ {2, 3, 4})
+∧ (i ≡ q + 2 mod 3, γ ∈ {3, 4})
+
+⎫
+
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎬
+⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎪⎭
+
+(47)
+
+⎫
+⎬
+
+⎭
+
+(48)
+where i(cid:6)(cid:6) ∈ {i(cid:6) + 1, i(cid:6) + 2, i(cid:6) + 3, i(cid:6) + 4} ⊂ Z/9Z. We can
+straightforwardly check that all
+the subsets satisfy the
+last three items 2)–4) directly. For any sequence {γ j ∈
+{0, 1, 2, 3, 4}} j∈Z/9Z, we can find that one of the aforemen-
+tioned subsets satisfies the item 1) as well. We confirmed this
+fact by a brute force search using a computer. This completes
+the first step of the proof.
+
+For the second step, for any given order ≺ defined from a
+secure protocol L0, we will derive a contradiction from the
+assumptions that conditions C1 and C2 hold and that there
+exists E(cid:6), which satisfies the four items 1)–4). We pick up
+\E(cid:6). Existence of it guaranteed
+the smallest edge e
+from the item 2). From the first item 1) and Lemma 9, there
+∈ E(cid:6) such that |γ (cid:6) − γm| = 1.
+is a node e
+When γ (cid:6), γm ∈ {0, 1}, we will give a contradiction, as an
+
+in Est
+0
+
+(cid:12)γ (cid:6)(cid:13)
+im
+
+(cid:12)γm(cid:13)
+im
+
+example. The third item 3) enforces
+
+(cid:12)1(cid:13)
+e
+im+8
+
+, e
+
+(cid:12)2(cid:13)
+im+8
+
+∈ Est
+0
+
+\E(cid:6).
+
+(49)
+
+≺ e
+
+\E(cid:6),
+
+(cid:12)γm(cid:13)
+im
+
+(cid:12)γ (cid:6)(cid:13)
+im
+
+in Est
+0
+
+the order e
+
+From this relation and the minimality of e
+
+(cid:12)γm(cid:13)
+im
+(cid:12)2(cid:13)
+(cid:12)1(cid:13)
+≺ e
+, e
+im+8 must hold. From this
+im+8
+(cid:12)2(cid:13)
+(cid:12)1(cid:13)
+im+8 or e
+order, C1 enforces us that e
+im+8 must be a smallest
+edges in the standard path im + 8. Here, we have use the
+(cid:12)γ (cid:6)(cid:13)
+= e(γ (cid:6)+2)
+(cid:12)γm(cid:13)
+= e(γm+2)
+1,im+8, e
+facts that e
+1,im+8,
+im
+im
+(cid:12)2(cid:13)
+= e(1)
+and e
+1,im+8. As a result, the item 1) enforces us that
+im+8
+(cid:12)2(cid:13)
+(cid:12)1(cid:13)
+im+8 must be in E(cid:6). However, this relation contra-
+im+8 or e
+e
+dicts the relation (49).
+
+1,im+8 , e
+
+= e(0)
+
+(cid:12)1(cid:13)
+im+8
+
+In the same way, we can derive contradictions in the
+other cases, i.e., γ (cid:6), γm ∈ {1, 2} or γ (cid:6), γm ∈ {2, 3} or γ (cid:6), γm ∈
+{3, 4}.
+
+VI. SUMMARY AND OUTLOOK
+We investigated relations between the KRP and SNC under
+the one-shot scenario, as well as under the scenario where
+wiretap sets are restricted. We found that there is a definite
+gap in security between these two types of protocols; namely,
+certain KRPs achieve better security than any SNC schemes
+on the same graph. We also found that this gap can be closed
+by generalizing the notion of SNC by adding free public
+
+VOLUME 4, 2023
+
+channels; that is, the KRP is equivalent to SNC augmented
+with free public channels.
+
+There are still many open problems. For example, in
+Section IV, we gave only one counterexample, which is a
+9-to-9 unicast situation where no node is compromised. On
+the other hand, it is an interesting open problem whether one
+can find other counterexamples in more general settings [19].
+Another open problem is whether the gap we found here
+persist even under the asymptotic case.
+
+It is also interesting to figure out on what types of graphs
+the gap occurs. Our conjecture is that there is no gap on
+plane graphs, and also for the case where there is only one
+sender–receiver pair, though the rigorous proofs remain as
+future works.
+
+APPENDIX
+FORMAL PROOF OF LEMMA 5
+
+Proof: We prove the lemma by using a slightly modified
+KRP, such that LKRP being secure is equivalent to
+
+protocol Lm
+Lm
+KRP being secure.
+Lm
+KRP is obtained by the following three process. First,
+when a public message made at any node in LKRP can be
+expressed as a linear combination of the other public mes-
+x px ⊕
+sages px and the local keys ry held by the node, i.e.,
+(cid:12)
+y ry, the corresponding message made at the node in Lm
+KRP
+is a linear combination of the local keys ry only, i.e., the
+y ry. Second, all the public communications
+parity of them
+in Lm
+KRP are used only for sending the parities to all users.
+Finally, as relayed keys, the users evaluate the same values
+as for LKRP.
+
+(cid:12)
+
+(cid:12)
+
+From this relation, we know that any bit obtained by the
+adversary in the case of Lm
+KRP can be evaluated by the adver-
+sary in the case of LKRP, and vice versa. This is why LKRP
+being secure is equivalent to Lm
+Self-contained definition of Lm
+
+KRP is the
+protocol in which the following four phases are implemented
+in sequence.
+
+KRP being secure.
+KRP is as follows. Lm
+
+1) Local key generation phase: All channels LKSe are
+
+used to generate local keys.
+
+2) Parity evaluation phase: Each node evaluates parities
+
+of (part of) local keys held by the node.
+
+3) Public communication phase: Evaluated parities are
+transferred from each node to users via public com-
+munications.
+
+4) Relayed key generation phase: Each user generates the
+relayed key from received local keys and the parities.
+
+Parity evaluation phase and relayed key generation phase
+
+are explicitly identified by the following definitions.
+
+1) All the parities each nodes evaluate: In each subgraph
+s,i, all the parities each nodes v(α) evaluate are
+Gbn
+
+v(0) :
+
+p[v(0), 1] := r[e(0)] ⊕ r[e(4)]
+
+p[v(0), 2] := r[e(4)] ⊕ r[e(6)]
+
+(50)
+
+(51)
+
+4100517
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+v(1) :
+
+p[v(1)] := r[e(8)] ⊕ r[e(10)] ⊕ r[e(1)]
+
+v(2) :
+
+p[v(2), 1] := r[e(5)] ⊕ r[e(8)]
+
+p[v(2), 2] := r[e(2)] ⊕ r[e(5)]
+
+(52)
+
+(53)
+
+(54)
+
+v(3) :
+
+v(4) :
+
+v(5) :
+
+p[v(3)] := r[e(6)] ⊕ r[e(9)] ⊕ r[e(3)] (55)
+
+p[v(4)] := r[e(4)] ⊕ r[e(5)] ⊕ r[e(7)] (56)
+
+p[v(5), 1] := r[e(7)] ⊕ r[e(10)]
+
+p[v(5), 2] := r[e(7)] ⊕ r[e(9)].
+
+(57)
+
+(58)
+
+In order to simplify the next expression, we introduce
+the following notation:
+
+p(0)
+s,i := p[v(0), 1] ⊕ p[v(4)] ⊕ p[v(2), 1]
+
+⊕ p[v(5), 1] ⊕ p[v(1)]
+
+p(1)
+s,i := p[v(2), 2] ⊕ p[v(4)] ⊕ p[v(0), 2]
+
+⊕ p[v(5), 2] ⊕ p[v(3)].
+
+(59)
+
+(60)
+
+2) The function which gives the relayed keys: The relayed
+i and u2
+
+keys generated by u1
+
+i are
+
+1,i+8]
+⊕ p(1)
+
+i := r[e(2)
+k1
+i := p(1)
+k2
+2,2i
+for i ∈ Z/9Z.
+
+1,i+8
+
+⊕ p(0)
+1,i
+
+⊕ p(0)
+
+2,2i+1
+
+⊕r[e(1)
+
+2,2i+1]
+
+From the definitions (50)–(60)
+
+p(0)
+s,i
+p(1)
+s,i
+
+= r[e(0)
+
+= r[e(2)
+
+s,i ] ⊕ r[e(1)
+s,i ]
+s,i ] ⊕ r[e(3)
+s,i ]
+
+(61)
+
+(62)
+
+(63)
+
+(64)
+
+are obtained for each subgraph Gbn
+s,i. Here, we have used the
+fact that r ⊕ r = 0 for r ∈ {0, 1}. By using the relations (63)
+and (64), the relayed keys (61) and (62) are evaluated as
+
+k1
+i
+
+= k2
+i
+
+= r[e(2)
+
+1,i+8].
+
+(65)
+
+This relation implies the soundness of LKRP. Since the gen-
+erated relayed keys are part of the local keys, and the public
+information is linear combinations of the local keys, the se-
+crecy can be checked from the fact that the relayed keys are
+(cid:2)
+linearly independent of all the published information.
+
+PROOF OF LEMMA11
+From the assumption (24)
+
+I(B, C0; B, C1) ≥ I(A; B, C1) ≥ I(A; A) = H(A).
+
+(66)
+
+This relation and the assumption (25), guarantee that
+
+I(B, C0; B, C1) = I(A; B, C1)
+
+H(A) = H(B).
+
+(67)
+
+(68)
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+The first relation and the assumption (24) imply
+P(A = a)P(A = a, B = b, C0 = c0, C1 = c1)
+
+= P(A = a, B = b, C0 = c0)P(A = a, B = b, C1 = c1)
+(69)
+
+I(Z; Y ) = I(X; Y )
+
+any a, b, c0, c1. Here, we have used the
+if
+
+for
+fact
+that,
+the relation
+∀x, y, z, P(X = x, Y = y, Z = z)P(Z = z) = P(X = x, Z =
+z)P(Y = y, Z = z) holds. By summing up with respect to c1,
+the relation becomes
+
+for Z := f (X ),
+
+P(A = a, B = b, C0 = c0)P(A = a)
+
+= P(A = a, B = b, C0 = c0)P(A = a, B = b).
+(70)
+Since A = f0(B, C0), we can define functions h0 and h1 such
+a = f0(h0(a), h1(a)) and P(A = a, B = h0(a), C0 =
+that
+h1(a)) (cid:5)= 0 hold, if P(A = a) (cid:5)= 0. Using these functions,
+by substituting h0(a) and h1(a) into b and c0, respectively,
+in the aforementioned relation the following is attained:
+
+P(A = a) = P(A = a, B = h0(a)).
+
+(71)
+
+This relation guarantees the following relation:
+
+(cid:13)
+
+a,b
+
+(cid:13)
+
+=
+
+=
+
+P(A = a, B = b)δ(b, h0(a))
+
+P(A = a, B = h0(a))
+
+a
+(cid:13)
+
+a
+
+P(A = a) = 1
+
+(72)
+
+(73)
+
+i.e., h0(A) = B. Therefore
+
+I(A; B) = H(B) = H(A)
+
+holds where (68) is used in the second equality. As a result,
+there is a function h2 such that h2(B) = A. The last assump-
+tion, i.e., the number of candidates for A is equal to that for
+B, and the existence of the functions h0 and h2 guarantee the
+existence of the bijective function g such that g(A) = B.
+
+REFERENCES
+[1] N. Gisin, G. Ribordy, W. Tittel, and H. Zbinden, “Quantum cryptography,”
+Rev. Mod. Phys., vol. 74, pp. 145–195, Mar. 2002, doi: 10.1103/RevMod-
+Phys.74.145.
+
+[2] F. Xu, X. Ma, Q. Zhang, H.-K. Lo, and J.-W. Pan, “Secure quantum key
+distribution with realistic devices,” Rev. Mod. Phys., vol. 92, May 2020,
+Art. no. 025002, doi: 10.1103/RevModPhys.92.025002.
+
+[3] L. Salvail, M. Peev, E. Diamanti, R. Allèaume, N. Lütkenhaus,
+and T. Länger, “Security of trusted repeater quantum key distribu-
+tion networks,” J. Comput. Secur., vol. 18, pp. 61–87, Jan. 2010,
+doi: 10.3233/JCS-2010-0373.
+
+[4] R. Alléaume et al., “Using quantum key distribution for cryptographic
+purposes: A survey,” Theor. Comput. Sci., vol. 560, pp. 62–81, 2014,
+doi: 10.1016/j.tcs.2014.09.018.
+
+[5] T. R. Beals and B. C. Sanders, “Distributed relay protocol for proba-
+bilistic information-theoretic security in a randomly-compromised net-
+work,” in Information Theoretic Security, R. Safavi-Naini, Ed. Berlin,
+Germany:Springer, 2008, pp. 29–39, doi: 10.1007/978-3-540-85093-9_4.
+Dis-
+Key
+Switzerland,
+Available:
+
+on
+[6] Overview
+tribution,
+Int.
+Recommendation
+http://handle.itu.int/11.1002/1000/11830-en
+
+Networks
+Telecommun.
+Y.3800,
+
+Supporting
+Union,
+
+Quantum
+Geneva,
+
+[Online].
+
+2019.
+
+Oct.
+
+4100517
+
+VOLUME 4, 2023
+
+Kato et al.: ADVANTAGE OF THE KRP OVER SNC
+
+IEEE
+uantum
+
+Transactions on
+
+Engineering
+
+[7] OpenQKD, “Open European quantum key distribution testbed,”
+
+doi: 10.3030/857156
+
+[8] Chicago Quantum Exchange, “Chicago expands and activates quantum
+taking steps toward a secure quantum internet.” [Online].
+https://news.uchicago.edu/story/chicago-quantum-network-
+
+network,
+Available:
+argonne-pritzker-molecular-engineering-toshiba
+
+[9] Y.-A. Chen et al., “An integrated space-to-ground quantum communica-
+tion network over 4,600 kilometres,” Nature, vol. 589, pp. 214–219, 2021,
+doi: 10.1038/s41586-020-03093-8.
+
+[10] M. Sasaki et al., “Field test of quantum key distribution in the Tokyo
+QKD network,” Opt. Exp., vol. 19, no. 11, pp. 10387–10409, May 2011,
+doi: 10.1364/OE.19.010387.
+
+[11] N. Cai and R. Yeung, “Secure network coding,” in Proc. IEEE Int. Symp.
+Inf. Theory, 2002, Art. no. 323, doi: 10.1109/ISIT.2002.1023595.
+[12] T. Cui, T. Ho, and J. Kliewer, “On secure network coding with unequal
+link capacities and restricted wiretapping sets,” in Proc. IEEE Inf. Theory
+Workshop, 2010, pp. 1–5, doi: 10.1109/CIG.2010.5592818.
+
+[13] M. Bloch, J. Barros, M. R. D. Rodrigues, and S. W. McLaughlin, “Wireless
+information-theoretic security,” IEEE Trans. Inf. Theory, vol. 54, no. 6,
+pp. 2515–2534, Jun. 2008, doi: 10.1109/TIT.2008.921908.
+
+[14] J. Katz and Y. Lindell, Introduction to Modern Cryptography, 3rd ed.
+
+London, U.K.: Chapman, 2020, doi: 10.1201/9781351133036.
+
+[15] M. N. Wegman and J. Carter, “New Hash functions and their use in authen-
+tication and set equality,” J. Comput. Syst. Sci., vol. 22, no. 3, pp. 265–279,
+1981, doi: 10.1016/0022-0000(81)90033-7.
+
+[16] M. Hayashi, M. Owari, G. Kato, and N. Cai, “Reduction theorem for
+secrecy over linear network code for active attacks,” Entropy, vol. 22,
+2020, Art. no. 1053, doi: 10.3390/e22091053.
+
+[17] S. Jaggi, M. Langberg, S. Katti, T. Ho, D. Katabi, and M. Medard,
+“Resilient network coding in the presence of Byzantine adversaries,”
+in Proc. IEEE 26th Int. Conf. Comput. Commun., 2007, pp. 616–624,
+doi: 10.1109/INFCOM.2007.78.
+
+[18] T. Ho and D. Lun, Network Coding: An Introduction. Cambridge, U.K.:
+Cambridge Univ. Press, 2008, doi: 10.1017/CBO9780511754623.
+[19] H. Zhou, K. Lv, L. Huang, and X. Ma, “Quantum network: Security
+assessment and key management,” IEEE/ACM Trans. Netw., vol. 30, no. 3,
+pp. 1328–1339, Jun. 2022, doi: 10.1109/TNET.2021.3136943.
+
+Go Kato was born in Japan, in 1976. He received the M.S. and Ph.D.
+degrees in science from The University of Tokyo, Tokyo, Japan, in 2001
+and 2004, respectively.
+
+In 2004, he joined the NTT Communication Science Laboratories and has
+been involved in the theoretical investigation of quantum information. His
+research interests include mathematical structures emerging in the field of
+quantum information. He moved to the National Institute of Information and
+Communication Technology, Tokyo, in 2022.
+
+Dr. Kato is a Member of the Physical Society of Japan.
+
+Mikio Fujiwara received the B.S. and M.S. degrees in electrical engineer-
+ing and the Ph.D. degree in physics from Nagoya University, Nagoya, Japan,
+in 1990, 1992, and 2002, respectively.
+
+He has been involved in R&D activities with the National Institute of In-
+formation and Communications Technology (previous name CRL, Ministry
+of Posts and Telecommunications of Japan), Tokyo, Japan, since 1992.
+
+Toyohiro Tsurumaru was born in Japan in 1973. He received the B.S.
+degree in physics from the University of Tokyo, Tokyo, Japan in 1996, and
+the M.S. and Ph.D. degrees in physics from the Graduate School of Science,
+University of Tokyo, in 1998 and 2001, respectively.
+
+He has been with Mitsubishi Electric Corporation, Kamakura-shi, Japan
+since 2001. His research interests include the theoretical aspects of quantum
+cryptography and modern cryptography.
+
+VOLUME 4, 2023
+
+4100517
+
+
