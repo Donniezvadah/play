@@ -131,3 +131,29 @@ python3 -m unittest test_krp.py
 ```
 
 All tests should pass, confirming that the simulation engine behaves as expected under the tested conditions.
+
+---
+
+## Example Simulation
+
+Running `python3 krp.py` will enumerate all non-isomorphic graphs with 3 nodes, simulate the KRP on each, and save a visualization to the `plots/` directory. The adversary is assumed to have wiretapped all edges.
+
+Below is the output for the complete graph on 3 nodes (K3):
+
+```
+--- Graph 4 ---
+Plot saved to plots/graph_4_nodes_3.png
+Local key for edge (0, 1): 1
+Local key for edge (0, 2): 1
+Local key for edge (1, 2): 1
+UserPair (0,1) path: [0, 1], key: 1
+Adversary wiretapped edges: {(0, 1), (0, 2), (1, 2)}, observed keys: [1, 1, 1]
+SECRECY BREACH: Path for UserPair (0,1) is in adversary's subspace.
+```
+
+### Graph Visualization
+
+The script generates the following visualization for the K3 graph. The user pair (0, 1) is highlighted in blue, and all edges are marked as wiretapped (red, dashed) because the adversary has compromised the entire network.
+
+![K3 Graph Visualization](plots/graph_4_nodes_3.png)
+

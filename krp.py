@@ -12,6 +12,8 @@ import networkx as nx
 import random
 from typing import List, Tuple, Set, Dict
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 # ----------------------------
 # Data Structures
@@ -85,6 +87,39 @@ def _rank_gf2(M):
                 pivot_row += 1
     return pivot_row
 
+def verify_min_cut_condition(G: nx.Graph, user_pair: UserPair, adversary_edges: Set[Tuple[int, int]]) -> bool:
+    """
+    Verifies if the adversary's wiretapped edges form a minimum edge cut 
+    between the user pair.
+
+    According to KRP principles, for the protocol to be secure, the set of 
+    edges controlled by the adversary must constitute a minimum separating set (min-cut)
+    between the users. This ensures the adversary has just enough information to 
+    potentially break security, but not more, setting the stage for the final 
+    linear independence check.
+
+    Args:
+        G: The full communication graph.
+        user_pair: The user pair (u1, u2).
+        adversary_edges: The set of edges wiretapped by the adversary.
+
+    Returns:
+        True if the adversary's edges form a min-cut, False otherwise.
+    """
+    # 1. Check if the adversary's edges form a cut at all.
+    # Removing the adversary's edges should disconnect the user pair.
+    G_temp = G.copy()
+    G_temp.remove_edges_from(adversary_edges)
+    if nx.has_path(G_temp, user_pair.node1, user_pair.node2):
+        return False  # Not a cut, users are still connected.
+
+    # 2. If it is a cut, check if it's a *minimum* cut.
+    # The size of the adversary's edge set must equal the size of the min-cut.
+    min_cut_size = len(nx.minimum_edge_cut(G, user_pair.node1, user_pair.node2))
+    
+    return len(adversary_edges) == min_cut_size
+
+
 # ----------------------------
 # KRP Protocol Simulation (Skeleton)
 # ----------------------------
@@ -131,74 +166,141 @@ def simulate_krp(
     # Step 4: Verification (soundness, secrecy)
     sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
 
-    # Information-theoretic secrecy verification
-    secrecy = True
-    if sound:  # Secrecy is only meaningful if a key was established
-        edge_to_idx = {edge: i for i, edge in enumerate(G.edges())}
-        num_edges = len(G.edges())
+    # --- Verification --- 
+    # 1. Soundness
+    sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
 
-        # Create a basis matrix for the adversary's subspace
-        adversary_basis = []
-        for edge in adversary.wiretapped_edges:
-            if edge in edge_to_idx:
-                vec = np.zeros(num_edges, dtype=int)
-                vec[edge_to_idx[edge]] = 1
-                adversary_basis.append(vec)
-        
-        adversary_matrix = np.array(adversary_basis)
+    # 2. Min-Cut Test
+    min_cut_test_passed = False
+    if sound and user_pairs:
+        min_cut_test_passed = verify_min_cut_condition(G, user_pairs[0], adversary.wiretapped_edges)
 
-        for up in user_pairs:
-            try:
-                path_nodes = nx.shortest_path(G, up.node1, up.node2)
-                path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) for i in range(len(path_nodes)-1)}
+    # 3. Secrecy
+    secrecy = False  # Default to not secure
+    if sound:
+        if not min_cut_test_passed:
+            log.append(f"SECRECY BREACH: Adversary does not hold a valid min-cut.")
+        else:
+            # Min-cut test passed, proceed with linear algebra check
+            edge_to_idx = {edge: i for i, edge in enumerate(G.edges())}
+            num_edges = len(G.edges())
+            adversary_basis = []
+            for edge in adversary.wiretapped_edges:
+                if edge in edge_to_idx:
+                    vec = np.zeros(num_edges, dtype=int)
+                    vec[edge_to_idx[edge]] = 1
+                    adversary_basis.append(vec)
+            adversary_matrix = np.array(adversary_basis)
 
-                path_vec = np.zeros(num_edges, dtype=int)
-                for edge in path_edges:
-                    if edge in edge_to_idx:
-                        path_vec[edge_to_idx[edge]] = 1
+            up = user_pairs[0]
+            path_nodes = nx.shortest_path(G, up.node1, up.node2)
+            path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) for i in range(len(path_nodes)-1)}
+            path_vec = np.zeros(num_edges, dtype=int)
+            for edge in path_edges:
+                if edge in edge_to_idx:
+                    path_vec[edge_to_idx[edge]] = 1
 
-                # Check for linear independence over GF(2) using rank test.
-                # If rank increases when path_vec is added, it's independent.
-                rank_before = _rank_gf2(adversary_matrix)
-                
-                augmented_matrix = np.vstack([adversary_matrix, path_vec]) if adversary_matrix.any() else path_vec.reshape(1, -1)
-                rank_after = _rank_gf2(augmented_matrix)
+            rank_before = _rank_gf2(adversary_matrix)
+            augmented_matrix = np.vstack([adversary_matrix, path_vec]) if adversary_matrix.any() else path_vec.reshape(1, -1)
+            rank_after = _rank_gf2(augmented_matrix)
+            
+            if rank_after > rank_before:
+                secrecy = True  # Secure only if path is LI
+            else:
+                log.append(f"SECRECY BREACH: Path for UserPair ({up.node1},{up.node2}) is in adversary's subspace.")
 
-                if rank_after == rank_before:
-                    secrecy = False
-                    log.append(f"SECRECY BREACH: Path for UserPair ({up.node1},{up.node2}) is in adversary's subspace.")
-                    break
-
-            except nx.NetworkXNoPath:
-                pass
-    else:
-        secrecy = True
-
-    result = {
-        "graph": G,
-        "user_pairs": user_pairs,
-        "adversary": adversary,
-        "sound": sound,
-        "secrecy": secrecy,
-        "log": log
-    }
     if verbose:
-        for entry in log:
-            print(entry)
-    return result
+        for line in log:
+            print(line)
+
+    return {
+        'soundness': sound,
+        'secrecy': secrecy,
+        'log': log,
+        'adversary_edges': adversary.wiretapped_edges,
+        'min_cut_test': min_cut_test_passed
+    }
+
+# ----------------------------
+# Plotting Utility
+# ----------------------------
+
+def plot_graph(G: nx.Graph, user_pairs: List[UserPair], adversary: Adversary, filename: str, results=None):
+    """
+    Plots the graph, highlighting user pairs and wiretapped edges, and saves it to a file.
+    """
+    pos = nx.spring_layout(G, seed=42)
+    plt.figure(figsize=(8, 6))
+
+    # Define colors
+    user_node_color = 'skyblue'
+    normal_node_color = 'lightgray'
+    wiretapped_edge_color = 'red'
+    normal_edge_color = 'black'
+
+    # Collect user nodes
+    user_nodes = {node for up in user_pairs for node in (up.node1, up.node2)}
+
+    # Draw nodes
+    node_colors = [user_node_color if n in user_nodes else normal_node_color for n in G.nodes()]
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=700)
+    nx.draw_networkx_labels(G, pos, font_size=12)
+
+    # Draw edges
+    wiretapped_edges = adversary.wiretapped_edges
+    normal_edges = [e for e in G.edges() if tuple(sorted(e)) not in wiretapped_edges and e not in wiretapped_edges]
+
+    nx.draw_networkx_edges(G, pos, edgelist=normal_edges, edge_color=normal_edge_color, width=1.5)
+    nx.draw_networkx_edges(G, pos, edgelist=list(wiretapped_edges), edge_color=wiretapped_edge_color, width=2.0, style='dashed')
+
+    plt.axis('off')
+
+    # Add simulation results to the plot
+    if results:
+        text_str = (
+            f"Adversary Set: {len(results['adversary_edges'])} edges\n"
+            f"Min-Cut Test Passed: {results['min_cut_test']}\n"
+            f"Is Secure: {results['secrecy']}\n"
+            f"KRP Sound: {results['soundness']}"
+        )
+        # Use figtext to position text relative to the figure, preventing cutoff
+        plt.figtext(0.5, 0.01, text_str, ha='center', va='bottom', fontsize=12, 
+                    bbox=dict(boxstyle='round,pad=0.5', fc='wheat', alpha=0.5))
+
+    # Ensure the 'plots' directory exists
+    plots_dir = 'plots'
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+
+    save_path = os.path.join(plots_dir, f"{filename}.pdf")
+    # Use bbox_inches='tight' to ensure the text box is not cut off
+    plt.savefig(save_path, format='pdf', bbox_inches='tight')
+    plt.close()
+    print(f"Plot saved to {save_path}")
 
 # ----------------------------
 # Example Usage (for up to 3 nodes)
 # ----------------------------
 
 if __name__ == "__main__":
-    n_nodes = 3
+    n_nodes = 4
     graphs = enumerate_all_graphs(n_nodes)
     print(f"Enumerated {len(graphs)} non-isomorphic graphs with {n_nodes} nodes.")
+
     for idx, G in enumerate(graphs):
-        print(f"\n--- Graph {idx+1} ---")
         # Example: first two nodes as user pair
         user_pairs = [UserPair(0, 1)]
-        # Example: adversary wiretaps all edges
-        adversary = Adversary(set(G.edges()))
-        simulate_krp(G, user_pairs, adversary, key_length=1, verbose=True)
+        
+        # --- Focus on connected graphs for the user pair ---
+        if nx.has_path(G, user_pairs[0].node1, user_pairs[0].node2):
+            print(f"\n--- Graph {idx+1} (Connected) ---")
+            
+            # Example: adversary wiretaps all edges
+            adversary = Adversary(set(G.edges()))
+
+            # Simulate the KRP
+            results = simulate_krp(G, user_pairs, adversary, key_length=1, verbose=True)
+
+            # Plot the graph configuration with results
+            plot_filename = f"graph_{idx+1}_nodes_{n_nodes}_connected"
+            plot_graph(G, user_pairs, adversary, plot_filename, results)
