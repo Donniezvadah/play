@@ -321,3 +321,7 @@ if __name__ == "__main__":
             # Plot the graph configuration with results
             plot_filename = f"graph_{idx+1}_nodes_{n_nodes}_connected"
             plot_graph(G, user_pairs, adversary, plot_filename, results)
+
+
+##This is the end of the code
+## This repository is for the KRP protocol verification framework
