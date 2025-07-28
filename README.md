@@ -38,7 +38,7 @@ The KRP enables a user pair, $(u_1, u_2)$, to establish a shared secret key by l
 
 2.  **Shared Key Computation**: The user pair finds a path $P$ between $u_1$ and $u_2$. A path is a sequence of edges, $P = \{e_1, e_2, ..., e_m\}$. The final shared key, $K$, is computed by XORing the local keys of all edges along this path:
 
-    $$ K = \bigoplus_{e \in P} k_e = k_{e_1} \oplus k_{e_2} \oplus ... \oplus k_{e_m} $$
+    $$K = \bigoplus_{e \in P} k_e = k_{e_1} \oplus k_{e_2} \oplus ... \oplus k_{e_m}$$
 
     Since the same path is used (or any two paths that form a cycle), both users arrive at the identical key $K$.
 
@@ -142,7 +142,9 @@ The test cases ensure that:
 To run the main simulation script, which will enumerate all graphs for 3 nodes and simulate the KRP on each, execute the following command:
 
 ```bash
-python3 krp.py
+python3 krp.py #This will run on  linux 
+
+python ./krp.py #This will run on windows
 ```
 
 The script's `if __name__ == "__main__":` block is configured to run a default scenario.

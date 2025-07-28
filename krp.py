@@ -77,6 +77,62 @@ def enumerate_all_graphs(n_nodes: int) -> List[nx.Graph]:
     return graphs
 
 # ----------------------------
+# Adversary Set Utilities
+# ----------------------------
+
+def adversary_set_size(G: nx.Graph) -> int:
+    """
+    Returns the number of possible adversary sets (subsets of edges) for the given graph.
+    This is 2^{|E|}, where |E| is the number of edges in G.
+    """
+    return 2 ** G.number_of_edges()
+
+
+def find_min_cut_edges(G: nx.Graph, sources: List[int], targets: List[int]) -> Set[Tuple[int, int]]:
+    """
+    Returns a set of edges that form a minimum cut between sources and targets.
+    For a single user pair, this is the classic min-cut. For multiple pairs, this is the multi-terminal cut.
+
+    Args:
+        G: The undirected graph.
+        sources: List of source nodes (e.g., all ai).
+        targets: List of target nodes (e.g., all bi).
+
+    Returns:
+        A set of edges forming a minimum cut between sources and targets.
+    """
+    if len(sources) == 1 and len(targets) == 1:
+        # Single pair: classic min-cut
+        cut_edges = nx.minimum_edge_cut(G, sources[0], targets[0])
+        return set(tuple(sorted(e)) for e in cut_edges)
+    else:
+        # Multi-terminal cut: brute-force approach for small graphs
+        # We try all possible edge subsets up to the size of the minimum cut
+        min_cut_size = None
+        min_cut_set = None
+        edges = list(G.edges())
+        for r in range(1, len(edges) + 1):
+            for candidate in itertools.combinations(edges, r):
+                G_temp = G.copy()
+                G_temp.remove_edges_from(candidate)
+                # Check if all sources are disconnected from all targets
+                disconnected = True
+                for s in sources:
+                    for t in targets:
+                        if nx.has_path(G_temp, s, t):
+                            disconnected = False
+                            break
+                    if not disconnected:
+                        break
+                if disconnected:
+                    if min_cut_size is None or r < min_cut_size:
+                        min_cut_size = r
+                        min_cut_set = set(tuple(sorted(e)) for e in candidate)
+            if min_cut_set is not None:
+                break
+        return min_cut_set if min_cut_set is not None else set()
+
+# ----------------------------
 # Helper for GF(2) linear algebra
 # ----------------------------
 
@@ -238,9 +294,9 @@ def simulate_krp(
         'min_cut_test': min_cut_test_passed
     }
 
-# ----------------------------
+# ----------------------------------------------
 # Plotting Utility
-# ----------------------------
+# ----------------------------------------------
 
 def plot_graph(G: nx.Graph, user_pairs: List[UserPair], adversary: Adversary, filename: str, results=None):
     """
@@ -296,7 +352,7 @@ def plot_graph(G: nx.Graph, user_pairs: List[UserPair], adversary: Adversary, fi
     print(f"Plot saved to {save_path}")
 
 # ----------------------------
-# Example Usage (for up to 3 nodes)
+# Example Usage (for up to 4 nodes)
 # ----------------------------
 
 if __name__ == "__main__":
@@ -308,7 +364,7 @@ if __name__ == "__main__":
         # Example: first two nodes as user pair
         user_pairs = [UserPair(0, 1)]
         
-        # --- Focus on connected graphs for the user pair ---x`x`x`xx`x``````
+        # --- Focus on connected graphs for the user pair ---
         if nx.has_path(G, user_pairs[0].node1, user_pairs[0].node2):
             print(f"\n--- Graph {idx+1} (Connected) ---")
             
