@@ -53,6 +53,38 @@ class Adversary:
     def __init__(self, wiretapped_edges: Set[Tuple[int, int]]):
         self.wiretapped_edges = wiretapped_edges
 
+
+def construct_public_channels(G: nx.Graph, user_pairs: List[UserPair]) -> Set[frozenset]:
+    """
+    Constructs the set of all public channels as sets of incoming edges to non-user, non-end nodes.
+    Each public channel is represented as a frozenset of edges feeding into the node.
+    Nodes that are user nodes (appear in any UserPair) or are end nodes (degree 1) are excluded.
+    Returns a set of frozensets (to allow set of sets).
+    """
+    user_nodes = set()
+    for up in user_pairs:
+        user_nodes.add(up.node1)
+        user_nodes.add(up.node2)
+
+    public_channels = set()
+    for node in G.nodes():
+        # Exclude user nodes and end nodes (degree 1)
+        if node in user_nodes:
+            continue
+        if G.degree[node] <= 1:
+            continue
+        # The public channel is the set of all edges feeding into this node
+        incoming_edges = set()
+        for neighbor in G.neighbors(node):
+            edge = tuple(sorted((node, neighbor)))
+            incoming_edges.add(edge)
+        if incoming_edges:
+            public_channels.add(frozenset(incoming_edges))
+    return public_channels
+
+# Note: Public channels can be reused and can make multiple announcements, as per the protocol.
+# This function simply constructs the structure; protocol logic can use these sets as needed.
+
 # ----------------------------
 # Graph Enumeration Utilities
 # ----------------------------
@@ -75,6 +107,21 @@ def enumerate_all_graphs(n_nodes: int) -> List[nx.Graph]:
         if not any(nx.is_isomorphic(G, H) for H in graphs):
             graphs.append(G)
     return graphs
+
+
+
+#------------------------------
+# Public Channels Utilities
+# ----------------------------
+
+def public_channels(G: nx.Graph, user_pairs: List[UserPair]) -> Set[Tuple[int, int]]:
+    """
+    Returns a set of edges that are public channels for the given graph and user pairs.
+    """
+    public_edges = set()
+    for up in user_pairs:
+        public_edges.update(G.edges(up.node1, up.node2))
+    return public_edges
 
 # ----------------------------
 # Adversary Set Utilities
