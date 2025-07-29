@@ -56,6 +56,19 @@ class Adversary:
 
 def construct_public_channels(G: nx.Graph, user_pairs: List[UserPair]) -> Set[frozenset]:
     """
+So the public channels are the set of all edges that are not used by the user pairs. 
+And we are going to use this public channels to simulate the KRP protocol.
+The public channels are used to anounce information ie via internet and accessible to all the users and as well as adversaries.
+They are ised to announce local keys  to the users in the following manner:
+1. Can announce local keys from any edges that are incoming to a given node ie say node v, 
+then it anounce e_i + e_(i+1) ie if only 2 edges are incoming to node v then it anounce e_i + e_(i+1) 
+
+2. Can be constructed by 1. + Public information from other public channnels  ie  it can announce e_i + e_(i+1) + e_(i+2)+e_(i+3)
+where e_(i+2) and e_(i+3) are the public information from other public channnels
+
+3. It is reusable meaning to say it can be used multiple times to announce information which is sometimes different from the previous announcement
+
+
     Constructs the set of all public channels as sets of incoming edges to non-user, non-end nodes.
     Each public channel is represented as a frozenset of edges feeding into the node.
     Nodes that are user nodes (appear in any UserPair) or are end nodes (degree 1) are excluded.
@@ -109,19 +122,6 @@ def enumerate_all_graphs(n_nodes: int) -> List[nx.Graph]:
     return graphs
 
 
-
-#------------------------------
-# Public Channels Utilities
-# ----------------------------
-
-def public_channels(G: nx.Graph, user_pairs: List[UserPair]) -> Set[Tuple[int, int]]:
-    """
-    Returns a set of edges that are public channels for the given graph and user pairs.
-    """
-    public_edges = set()
-    for up in user_pairs:
-        public_edges.update(G.edges(up.node1, up.node2))
-    return public_edges
 
 # ----------------------------
 # Adversary Set Utilities
