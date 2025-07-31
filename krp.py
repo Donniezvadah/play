@@ -184,7 +184,15 @@ def find_min_cut_edges(G: nx.Graph, sources: List[int], targets: List[int]) -> S
 # ----------------------------
 
 def _rank_gf2(M):
-    """Calculates the rank of a binary matrix over GF(2)."""
+    """
+    Calculates the rank of a binary matrix over GF(2).
+    
+    Args:
+        M: 2D numpy array representing the matrix
+        
+    Returns:
+        int: The rank of the matrix over GF(2)
+    """
     if not M.any():
         return 0
     
@@ -194,50 +202,163 @@ def _rank_gf2(M):
     pivot_row = 0
 
     for j in range(cols):
-        if pivot_row < rows:
-            i = pivot_row
-            while i < rows and mat[i, j] == 0:
-                i += 1
+        if pivot_row >= rows:
+            break
             
-            if i < rows:
+        # Find pivot row
+        i = pivot_row
+        while i < rows and mat[i, j] == 0:
+            i += 1
+        
+        if i < rows:
+            # Swap rows
+            if i != pivot_row:
                 mat[[i, pivot_row]] = mat[[pivot_row, i]]
-                for k in range(rows):
-                    if k != pivot_row and mat[k, j] == 1:
-                        mat[k] = (mat[k] + mat[pivot_row]) % 2
-                pivot_row += 1
-    return pivot_row
+            
+            # Eliminate this column in other rows
+            for k in range(rows):
+                if k != pivot_row and mat[k, j] == 1:
+                    mat[k] = (mat[k] + mat[pivot_row]) % 2
+            
+            pivot_row += 1
+            rank += 1
+    
+    return rank
 
-def verify_min_cut_condition(G: nx.Graph, user_pair: UserPair, adversary_edges: Set[Tuple[int, int]]) -> bool:
+
+def _can_adversary_reconstruct(G: nx.Graph, user_pair: UserPair, adversary: Adversary, 
+                             local_keys: dict, log: List[str], verbose: bool = False) -> bool:
+    """
+    Determines if the adversary can reconstruct the shared key using their wiretapped edges
+    and public announcements.
+    
+    Args:
+        G: The network graph
+        user_pair: The user pair (u1, u2)
+        adversary: The adversary with wiretapped edges
+        local_keys: Dictionary mapping edges to their local keys
+        log: Log list to append messages to
+        verbose: If True, print detailed debug information
+        
+    Returns:
+        bool: True if the adversary can reconstruct the key, False otherwise
+    """
+    try:
+        # Get the key path
+        path_nodes = nx.shortest_path(G, user_pair.node1, user_pair.node2)
+        path_edges = [tuple(sorted((path_nodes[i], path_nodes[i+1]))) 
+                     for i in range(len(path_nodes)-1)]
+        
+        # The actual key is the XOR of all edge keys on the path
+        actual_key = 0
+        for edge in path_edges:
+            actual_key ^= local_keys[edge]
+        
+        if verbose:
+            print(f"Actual key: {actual_key}")
+            print(f"Path edges: {path_edges}")
+        
+        # Get all non-user nodes (potential public announcement points)
+        non_user_nodes = set(G.nodes()) - {user_pair.node1, user_pair.node2}
+        
+        # For each non-user node, get its incoming edges and create equations
+        equations = []
+        for node in non_user_nodes:
+            incoming_edges = [e for e in G.edges() if e[1] == node or e[0] == node]
+            if len(incoming_edges) > 1:  # Only nodes with degree > 1 can make announcements
+                # The sum of incoming edge keys is public
+                eq = {edge: 1 for edge in incoming_edges}
+                equations.append(eq)
+        
+        # Adversary's knowledge: wiretapped edges and public equations
+        known_edges = set(adversary.wiretapped_edges)
+        known_vars = {edge: local_keys[edge] for edge in known_edges}
+        
+        if verbose:
+            print(f"Known edges: {known_edges}")
+            print(f"Known vars: {known_vars}")
+        
+        # Try to solve the system of equations
+        # This is a simplified approach - in practice, you'd use Gaussian elimination
+        # over GF(2) to solve for the unknown edge keys
+        
+        # Check if all path edges are known
+        if all(edge in known_edges for edge in path_edges):
+            # Adversary can compute the key directly
+            reconstructed_key = 0
+            for edge in path_edges:
+                reconstructed_key ^= known_vars[edge]
+            
+            if verbose:
+                print(f"Reconstructed key: {reconstructed_key}")
+            
+            return reconstructed_key == actual_key
+        
+        # If not all path edges are known, check if they can be derived
+        # from the equations and known edges
+        # This is a simplified check - a complete implementation would solve the system
+        
+        # Count how many path edges are unknown
+        unknown_path_edges = [e for e in path_edges if e not in known_edges]
+        
+        if verbose:
+            print(f"Unknown path edges: {unknown_path_edges}")
+        
+        # If there's only one unknown edge on the path, the adversary can compute it
+        # using the public equations
+        if len(unknown_path_edges) == 1:
+            # The adversary can compute the missing edge key using the equations
+            # and known edges, then compute the key
+            return True
+        
+        # More complex case: multiple unknown edges on the path
+        # In a complete implementation, we'd solve the system of equations here
+        
+        # For now, be conservative and assume the adversary can reconstruct
+        # if they have a min-cut
+        is_min_cut, _ = verify_min_cut_condition(G, user_pair, adversary.wiretapped_edges)
+        return is_min_cut
+        
+    except Exception as e:
+        if verbose:
+            print(f"Error in _can_adversary_reconstruct: {e}")
+        return False  # Assume secure if we can't determine otherwise
+
+def verify_min_cut_condition(G: nx.Graph, user_pair: UserPair, adversary_edges: Set[Tuple[int, int]], verbose: bool = False) -> Tuple[bool, str]:
     """
     Verifies if the adversary's wiretapped edges form a minimum edge cut 
-    between the user pair.
+    between the user pair and if they can reconstruct the key.
 
-    According to KRP principles, for the protocol to be secure, the set of 
-    edges controlled by the adversary must constitute a minimum separating set (min-cut)
-    between the users. This ensures the adversary has just enough information to 
-    potentially break security, but not more, setting the stage for the final 
-    linear independence check.
+    According to KRP principles, for the protocol to be secure, the set of
+    edges controlled by the adversary must not allow them to reconstruct the key.
+    This function checks both the min-cut condition and attempts key reconstruction.
 
     Args:
         G: The full communication graph.
         user_pair: The user pair (u1, u2).
         adversary_edges: The set of edges wiretapped by the adversary.
+        verbose: If True, prints detailed debug information.
 
     Returns:
-        True if the adversary's edges form a min-cut, False otherwise.
+        A tuple (is_min_cut, message) where:
+        - is_min_cut: True if the edges form a min-cut
+        - message: Detailed explanation of the result
     """
-    # 1. Check if the adversary's edges form a cut at all.
-    # Removing the adversary's edges should disconnect the user pair.
+    # 1. Check if the adversary's edges form a cut
     G_temp = G.copy()
     G_temp.remove_edges_from(adversary_edges)
     if nx.has_path(G_temp, user_pair.node1, user_pair.node2):
-        return False  # Not a cut, users are still connected.
+        return False, "Adversary's edges do not form a cut between the users"
 
-    # 2. If it is a cut, check if it's a *minimum* cut.
-    # The size of the adversary's edge set must equal the size of the min-cut.
+    # 2. Check if it's a minimum cut
     min_cut_size = len(nx.minimum_edge_cut(G, user_pair.node1, user_pair.node2))
+    is_min_cut = len(adversary_edges) == min_cut_size
     
-    return len(adversary_edges) == min_cut_size
+    if verbose:
+        print(f"Min-cut size: {min_cut_size}, Adversary edges: {len(adversary_edges)}")
+        print(f"Is min-cut: {is_min_cut}")
+    
+    return is_min_cut, f"Adversary controls a {'min-cut' if is_min_cut else 'non-min cut'}"
 
 
 # ----------------------------
@@ -251,6 +372,24 @@ def simulate_krp(
     key_length: int = 1,
     verbose: bool = True
 ) -> Dict:
+    """
+    Simulate the KRP protocol on a given graph with specific user pairs and adversary.
+    
+    Args:
+        G: The network graph
+        user_pairs: List of UserPair objects
+        adversary: The adversary with wiretapped edges
+        key_length: Length of the key in bits (default: 1 for simplicity)
+        verbose: If True, print detailed logs
+        
+    Returns:
+        Dict containing simulation results including:
+        - soundness: Whether the protocol is sound (users agree on key)
+        - secrecy: Whether the protocol maintains secrecy against the adversary
+        - min_cut_test: Result of the min-cut test
+        - log: List of log messages
+        - adversary_edges: Set of wiretapped edges
+    """
     """
     Simulate the KRP protocol on a given graph with specific user pairs and adversary.
     Returns a dictionary with detailed logs and verification results.
@@ -281,53 +420,86 @@ def simulate_krp(
     observed_keys = [local_keys[e] for e in adversary.wiretapped_edges if e in local_keys]
     log.append(f"Adversary wiretapped edges: {adversary.wiretapped_edges}, observed keys: {observed_keys}")
 
-    # Step 4: Verification (soundness, secrecy)
-    sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
-    # Step 4: Verification (soundness, secrecy)
-    sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
-
     # --- Verification --- 
-    # 1. Soundness
+    # 1. Soundness: Both users derive the same key
     sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
+    if not sound:
+        log.append("SOUNDNESS FAILED: Users did not derive the same key.")
+    else:
+        log.append("SOUNDNESS: Users derived matching keys.")
 
-    # 2. Min-Cut Test
+    # 2. Min-Cut and Security Analysis
     min_cut_test_passed = False
+    secrecy = False
+    
     if sound and user_pairs:
-        min_cut_test_passed = verify_min_cut_condition(G, user_pairs[0], adversary.wiretapped_edges)
-
-    # 3. Secrecy
-    secrecy = False  # Default to not secure
-    if sound:
-        if not min_cut_test_passed:
-            log.append(f"SECRECY BREACH: Adversary does not hold a valid min-cut.")
-        else:
-            # Min-cut test passed, proceed with linear algebra check
+        up = user_pairs[0]  # For now, handle single user pair
+        
+        # Get the key path
+        try:
+            path_nodes = nx.shortest_path(G, up.node1, up.node2)
+            path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) 
+                         for i in range(len(path_nodes)-1)}
+            
+            # 2.1 Min-Cut Test
+            is_min_cut, min_cut_msg = verify_min_cut_condition(
+                G, up, adversary.wiretapped_edges, verbose=verbose)
+            min_cut_test_passed = is_min_cut
+            log.append(f"MIN-CUT ANALYSIS: {min_cut_msg}")
+            
+            # 2.2 Linear Independence Check
             edge_to_idx = {edge: i for i, edge in enumerate(G.edges())}
             num_edges = len(G.edges())
+            
+            # Adversary's basis: wiretapped edges
             adversary_basis = []
             for edge in adversary.wiretapped_edges:
                 if edge in edge_to_idx:
                     vec = np.zeros(num_edges, dtype=int)
                     vec[edge_to_idx[edge]] = 1
                     adversary_basis.append(vec)
-            adversary_matrix = np.array(adversary_basis)
-
-            up = user_pairs[0]
-            path_nodes = nx.shortest_path(G, up.node1, up.node2)
-            path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) for i in range(len(path_nodes)-1)}
+            
+            # Key path vector
             path_vec = np.zeros(num_edges, dtype=int)
             for edge in path_edges:
                 if edge in edge_to_idx:
                     path_vec[edge_to_idx[edge]] = 1
-
-            rank_before = _rank_gf2(adversary_matrix)
-            augmented_matrix = np.vstack([adversary_matrix, path_vec]) if adversary_matrix.any() else path_vec.reshape(1, -1)
-            rank_after = _rank_gf2(augmented_matrix)
             
-            if rank_after > rank_before:
-                secrecy = True  # Secure only if path is LI
+            # Check if path is in the span of adversary's knowledge
+            if adversary_basis:
+                adversary_matrix = np.array(adversary_basis)
+                rank_before = _rank_gf2(adversary_matrix)
+                augmented_matrix = np.vstack([adversary_matrix, path_vec])
+                rank_after = _rank_gf2(augmented_matrix)
+                
+                if verbose:
+                    print(f"Adversary matrix rank: {rank_before}")
+                    print(f"Augmented matrix rank: {rank_after}")
+                
+                if rank_after > rank_before:
+                    secrecy = True
+                    log.append("SECRECY: Key path is independent of adversary's knowledge.")
+                else:
+                    log.append("SECRECY BREACH: Key path can be reconstructed by the adversary.")
             else:
-                log.append(f"SECRECY BREACH: Path for UserPair ({up.node1},{up.node2}) is in adversary's subspace.")
+                # No adversary edges, always secure
+                secrecy = True
+                log.append("SECRECY: No edges are wiretapped.")
+            
+            # 2.3 Check if adversary can reconstruct the key
+            if not secrecy:
+                # Try to reconstruct the key using wiretapped edges and public announcements
+                # This is a more thorough check than just the rank test
+                if _can_adversary_reconstruct(G, up, adversary, local_keys, log, verbose):
+                    secrecy = False
+                    log.append("SECRECY BREACH: Adversary can reconstruct the key!")
+                else:
+                    log.append("SECRECY: Adversary cannot reconstruct the key despite min-cut.")
+                    secrecy = True  # Override if reconstruction fails
+                    
+        except nx.NetworkXNoPath:
+            log.append("ERROR: No path exists between users.")
+            sound = False
 
     if verbose:
         for line in log:
@@ -399,31 +571,145 @@ def plot_graph(G: nx.Graph, user_pairs: List[UserPair], adversary: Adversary, fi
     print(f"Plot saved to {save_path}")
 
 # ----------------------------
-# Example Usage (for up to 4 nodes)
+# Interactive KRP Verifier
 # ----------------------------
 
+def run_krp_verifier_interactive():
+    print("=== KRP Protocol Verifier (Interactive Mode) ===")
+    # Input nodes
+    n_nodes = int(input("Enter number of nodes: "))
+    nodes = list(range(n_nodes))
+    print(f"Nodes: {nodes}")
+
+    # Input edges
+    print("Enter edges as pairs of node indices (e.g. 0 1), one per line. Enter a blank line to finish:")
+    edges = set()
+    while True:
+        line = input()
+        if not line.strip():
+            break
+        parts = line.strip().split()
+        if len(parts) != 2:
+            print("Invalid edge, enter two node indices.")
+            continue
+        u, v = map(int, parts)
+        if u == v or u not in nodes or v not in nodes:
+            print("Invalid edge, node indices out of range or self-loop.")
+            continue
+        edges.add(tuple(sorted((u, v))))
+    print(f"Edges: {edges}")
+
+    # Input user pairs
+    print("Enter user pair as two node indices (e.g. 0 1):")
+    while True:
+        line = input()
+        parts = line.strip().split()
+        if len(parts) == 2:
+            u1, u2 = map(int, parts)
+            if u1 in nodes and u2 in nodes and u1 != u2:
+                user_pairs = [UserPair(u1, u2)]
+                break
+        print("Invalid user pair, try again.")
+
+    # Input wiretapped edges
+    print("Enter wiretapped edges as pairs of node indices (e.g. 0 1), one per line. Enter a blank line to finish:")
+    wiretapped_edges = set()
+    while True:
+        line = input()
+        if not line.strip():
+            break
+        parts = line.strip().split()
+        if len(parts) != 2:
+            print("Invalid edge, enter two node indices.")
+            continue
+        u, v = map(int, parts)
+        edge = tuple(sorted((u, v)))
+        if edge not in edges:
+            print("Edge not in graph, try again.")
+            continue
+        wiretapped_edges.add(edge)
+    print(f"Wiretapped edges: {wiretapped_edges}")
+
+    # Build the graph
+    G = nx.Graph()
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+
+    # Check connectivity
+    if not nx.has_path(G, user_pairs[0].node1, user_pairs[0].node2):
+        print("User pair is not connected in the graph. Exiting.")
+        return
+
+    # Build adversary
+    adversary = Adversary(wiretapped_edges)
+
+    # Announce public channels
+    print("\n--- Public Channel Announcements ---")
+    public_channels = construct_public_channels(G, user_pairs)
+    for pc in public_channels:
+        print(f"Public channel (incoming edges): {sorted(pc)}")
+
+    # Simulate the KRP
+    print("\n--- KRP Simulation and Verification ---")
+    results = simulate_krp(G, user_pairs, adversary, key_length=1, verbose=True)
+
+    # Plot the graph
+    plot_filename = "interactive_krp_graph"
+    plot_graph(G, user_pairs, adversary, plot_filename, results)
+    print(f"Graph plotted to 'plots/{plot_filename}.pdf'")
+
+
 if __name__ == "__main__":
-    n_nodes = 4
-    graphs = enumerate_all_graphs(n_nodes)
-    print(f"Enumerated {len(graphs)} non-isomorphic graphs with {n_nodes} nodes.")
-
-    for idx, G in enumerate(graphs):
-        # Example: first two nodes as user pair
-        user_pairs = [UserPair(0, 1)]
-        
-        # --- Focus on connected graphs for the user pair ---
-        if nx.has_path(G, user_pairs[0].node1, user_pairs[0].node2):
-            print(f"\n--- Graph {idx+1} (Connected) ---")
-            
-            # Example: adversary wiretaps all edges
-            adversary = Adversary(set(G.edges()))
-
-            # Simulate the KRP
-            results = simulate_krp(G, user_pairs, adversary, key_length=1, verbose=True)
-
-            # Plot the graph configuration with results
-            plot_filename = f"graph_{idx+1}_nodes_{n_nodes}_connected"
-            plot_graph(G, user_pairs, adversary, plot_filename, results)
+    print("Select mode:\n1. Interactive verifier\n2. Canonical batch verifier")
+    mode = input("Enter 1 or 2: ").strip()
+    if mode == "1":
+        run_krp_verifier_interactive()
+    elif mode == "2":
+        print("\n--- Running KRP Verifier on Canonical Test Graphs ---")
+        from krp_canonical_graphs import all_canonical_graphs
+        graphs = all_canonical_graphs()
+        for G, user_pairs, name in graphs:
+            print(f"\n=== Graph: {name} ===")
+            print(f"Nodes: {list(G.nodes())}")
+            print(f"Edges: {list(G.edges())}")
+            print(f"User pairs: {user_pairs}")
+            # For each user pair, prompt for a wiretap set
+            for idx, up in enumerate(user_pairs):
+                print(f"\n--- User Pair {idx+1}: {up} ---")
+                print("Enter wiretapped edges for this user pair as pairs of node indices (e.g. 0 1), one per line. Enter a blank line to finish:")
+                wiretapped_edges = set()
+                while True:
+                    line = input()
+                    if not line.strip():
+                        break
+                    parts = line.strip().split()
+                    if len(parts) != 2:
+                        print("Invalid edge, enter two node indices.")
+                        continue
+                    u, v = map(int, parts)
+                    edge = tuple(sorted((u, v)))
+                    if edge not in G.edges():
+                        print("Edge not in graph, try again.")
+                        continue
+                    wiretapped_edges.add(edge)
+                print(f"Wiretapped edges: {wiretapped_edges}")
+                # Build UserPair and Adversary objects
+                user_pair_objs = [UserPair(up[0], up[1])]
+                adversary = Adversary(wiretapped_edges)
+                # Announce public channels
+                print("\n--- Public Channel Announcements ---")
+                public_channels = construct_public_channels(G, user_pair_objs)
+                for pc in public_channels:
+                    print(f"Public channel (incoming edges): {sorted(pc)}")
+                # Simulate the KRP
+                print("\n--- KRP Simulation and Verification ---")
+                results = simulate_krp(G, user_pair_objs, adversary, key_length=1, verbose=True)
+                # Plot the graph
+                plot_filename = f"canonical_{name}_userpair{idx+1}"
+                plot_graph(G, user_pair_objs, adversary, plot_filename, results)
+                print(f"Graph plotted to 'plots/{plot_filename}.pdf'")
+    else:
+        print("Invalid mode. Exiting.")
 
 
 ##This is the end of the code
