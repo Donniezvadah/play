@@ -14,8 +14,7 @@ and verifies both soundness and secrecy properties under adversarial models.
 '''
 So basically we are trying to build a KRP protocol verification framework.
 So, here are some of the things and fundamental part of this framework. 
-
-1. Graph Enumeration: We are going to enumerate all non-isomorphic undirected graphs with n_nodes nodes.
+1. Graph: We are going to define a graph as a set of nodes and edges.
 2. User Pair: We are going to define a user pair as a tuple of two nodes.
 3. Adversary: We are going to define an adversary as a set of edges that the adversary can wiretap.
 4. Simulation: We are going to simulate the KRP protocol on each graph with specific user pairs and adversary.
@@ -54,46 +53,54 @@ class Adversary:
         self.wiretapped_edges = wiretapped_edges
 
 
-def construct_public_channels(G: nx.Graph, user_pairs: List[UserPair]) -> Set[frozenset]:
+def construct_public_channels(G: nx.Graph, user_pairs: List[UserPair], local_keys: dict = None) -> Dict[frozenset, int]:
     """
-So the public channels are the set of all edges that are not used by the user pairs. 
-And we are going to use this public channels to simulate the KRP protocol.
-The public channels are used to anounce information ie via internet and accessible to all the users and as well as adversaries.
-They are ised to announce local keys  to the users in the following manner:
-1. Can announce local keys from any edges that are incoming to a given node ie say node v, 
-then it anounce e_i + e_(i+1) ie if only 2 edges are incoming to node v then it anounce e_i + e_(i+1) 
-
-2. Can be constructed by 1. + Public information from other public channnels  ie  it can announce e_i + e_(i+1) + e_(i+2)+e_(i+3)
-where e_(i+2) and e_(i+3) are the public information from other public channnels
-
-3. It is reusable meaning to say it can be used multiple times to announce information which is sometimes different from the previous announcement
-
-
-    Constructs the set of all public channels as sets of incoming edges to non-user, non-end nodes.
-    Each public channel is represented as a frozenset of edges feeding into the node.
-    Nodes that are user nodes (appear in any UserPair) or are end nodes (degree 1) are excluded.
-    Returns a set of frozensets (to allow set of sets).
+    Constructs public channel announcements for the KRP protocol.
+    
+    For each non-user node with degree > 1, creates a public announcement that is the XOR of all 
+    local keys on edges incident to that node. These announcements are accessible to all users and adversaries.
+    
+    Args:
+        G: The network graph
+        user_pairs: List of UserPair objects
+        local_keys: Dictionary mapping edges to their local keys (optional)
+        
+    Returns:
+        A dictionary mapping frozensets of edges to their corresponding public announcement values.
+        Each key is a frozenset of edges that contribute to the announcement.
     """
+    # Collect all user nodes (both u1 and u2 from each pair)
     user_nodes = set()
     for up in user_pairs:
         user_nodes.add(up.node1)
         user_nodes.add(up.node2)
 
-    public_channels = set()
+    public_announcements = {}
+    
     for node in G.nodes():
-        # Exclude user nodes and end nodes (degree 1)
-        if node in user_nodes:
+        # Skip user nodes and end nodes (degree 1)
+        if node in user_nodes or G.degree[node] <= 1:
             continue
-        if G.degree[node] <= 1:
+            
+        # Get all edges incident to this node
+        incident_edges = [tuple(sorted((node, neighbor))) for neighbor in G.neighbors(node)]
+        
+        if not incident_edges:
             continue
-        # The public channel is the set of all edges feeding into this node
-        incoming_edges = set()
-        for neighbor in G.neighbors(node):
-            edge = tuple(sorted((node, neighbor)))
-            incoming_edges.add(edge)
-        if incoming_edges:
-            public_channels.add(frozenset(incoming_edges))
-    return public_channels
+            
+        # If local_keys are provided, compute the actual announcement value
+        # Otherwise, just store the set of edges that would be used
+        if local_keys is not None:
+            # The announcement is the XOR of all local keys on incident edges
+            announcement = 0
+            for edge in incident_edges:
+                if edge in local_keys:
+                    announcement ^= local_keys[edge]
+            public_announcements[frozenset(incident_edges)] = announcement
+        else:
+            public_announcements[frozenset(incident_edges)] = None
+            
+    return public_announcements
 
 # Note: Public channels can be reused and can make multiple announcements, as per the protocol.
 # This function simply constructs the structure; protocol logic can use these sets as needed.
@@ -389,116 +396,185 @@ def simulate_krp(
         - min_cut_test: Result of the min-cut test
         - log: List of log messages
         - adversary_edges: Set of wiretapped edges
-    """
-    """
-    Simulate the KRP protocol on a given graph with specific user pairs and adversary.
-    Returns a dictionary with detailed logs and verification results.
+        - public_announcements: Dictionary of public announcements
     """
     log = []
+    
     # Step 1: Distribute random local keys (for each edge)
     local_keys = {}
     for edge in G.edges():
         local_keys[edge] = random.getrandbits(key_length)
-        log.append(f"Local key for edge {edge}: {local_keys[edge]}")
-
-    # Step 2: Each user pair computes their relayed key (simplified for now)
+        if verbose:
+            log.append(f"Local key for edge {edge}: {local_keys[edge]}")
+    
+    # Step 2: Generate public announcements (XOR of local keys at each non-user node)
+    public_announcements = construct_public_channels(G, user_pairs, local_keys)
+    
+    if verbose:
+        log.append("\n--- Public Announcements ---")
+        for edges, value in public_announcements.items():
+            log.append(f"Node with edges {sorted(edges)} announces: {value}")
+    
+    # Step 3: Each user pair computes their shared key. 
+    # In this protocol, both users compute the key by XORing all local keys on the shortest path.
+    # Public announcements are for the adversary, not for users to compute the key.
     for up in user_pairs:
-        # For demonstration, just XOR all keys on a path between the users
         try:
             path = nx.shortest_path(G, up.node1, up.node2)
+            path_edges = [tuple(sorted((path[i], path[i+1]))) for i in range(len(path)-1)]
+            
+            # Both users compute the key by XORing local keys on the path.
+            # Since they use the same path and same local key values, k1 and k2 will be identical.
             key = 0
-            for i in range(len(path)-1):
-                e = tuple(sorted((path[i], path[i+1])))
-                key ^= local_keys[e]
-            up.k1 = up.k2 = key
-            log.append(f"UserPair ({up.node1},{up.node2}) path: {path}, key: {key}")
+            for edge in path_edges:
+                key ^= local_keys[edge]
+            
+            up.k1 = key
+            up.k2 = key
+            
+            if verbose:
+                log.append(f"\n--- UserPair ({up.node1},{up.node2}) ---")
+                log.append(f"Path: {path}")
+                log.append(f"Shared key (path XOR): {key}")
+                
+                # Log the local keys used in the path
+                for edge in path_edges:
+                    log.append(f"  Edge {edge}: local key = {local_keys[edge]}")
+                
+                # Log how public announcements could be used to verify/update the key
+                log.append("\nPublic announcements that could help verify the key:")
+                for edges, value in public_announcements.items():
+                    if any(e in path_edges for e in edges):
+                        involved_edges = [e for e in edges if e in path_edges]
+                        if involved_edges:
+                            log.append(f"  Announcement {value} involves path edges: {involved_edges}")
+
         except nx.NetworkXNoPath:
             up.k1 = up.k2 = None
             log.append(f"UserPair ({up.node1},{up.node2}) has no connecting path.")
 
-    # Step 3: Adversary observes keys on wiretapped edges
-    observed_keys = [local_keys[e] for e in adversary.wiretapped_edges if e in local_keys]
-    log.append(f"Adversary wiretapped edges: {adversary.wiretapped_edges}, observed keys: {observed_keys}")
+    # Step 4: Adversary observes wiretapped edges and public announcements
+    observed_keys = {e: local_keys[e] for e in adversary.wiretapped_edges if e in local_keys}
+    
+    if verbose:
+        log.append("\n--- Adversary's Knowledge ---")
+        log.append(f"Wiretapped edges and keys: {observed_keys}")
+        log.append(f"Public announcements: {public_announcements}")
+        
+        # Adversary can use public announcements to potentially learn more keys
+        log.append("\nAdversary can use public announcements to learn:")
+        for edges, value in public_announcements.items():
+            # Count how many edges in this announcement are wiretapped
+            wiretapped = [e for e in edges if e in observed_keys]
+            if wiretapped and len(wiretapped) == len(edges) - 1:
+                # Adversary can compute the missing edge's key
+                missing = [e for e in edges if e not in observed_keys][0]
+                computed_key = value
+                for e in wiretapped:
+                    computed_key ^= observed_keys[e]
+                log.append(f"  Can compute key for edge {missing} = {computed_key} "
+                         f"using announcement {value} and wiretapped edges {wiretapped}")
+                observed_keys[missing] = computed_key
 
     # --- Verification --- 
     # 1. Soundness: Both users derive the same key
     sound = all(up.k1 == up.k2 and up.k1 is not None for up in user_pairs)
     if not sound:
-        log.append("SOUNDNESS FAILED: Users did not derive the same key.")
+        log.append("\nSOUNDNESS FAILED: Users did not derive the same key.")
     else:
-        log.append("SOUNDNESS: Users derived matching keys.")
+        log.append("\nSOUNDNESS: Users derived matching keys.")
 
-    # 2. Min-Cut and Security Analysis
+    # 2. Security Analysis (Secrecy)
     min_cut_test_passed = False
     secrecy = False
     
     if sound and user_pairs:
         up = user_pairs[0]  # For now, handle single user pair
         
-        # Get the key path
         try:
+            # Get the key path
             path_nodes = nx.shortest_path(G, up.node1, up.node2)
             path_edges = {tuple(sorted((path_nodes[i], path_nodes[i+1]))) 
                          for i in range(len(path_nodes)-1)}
             
-            # 2.1 Min-Cut Test
+            # 2.1 Min-Cut Test (Basic security check)
             is_min_cut, min_cut_msg = verify_min_cut_condition(
                 G, up, adversary.wiretapped_edges, verbose=verbose)
             min_cut_test_passed = is_min_cut
-            log.append(f"MIN-CUT ANALYSIS: {min_cut_msg}")
+            log.append(f"\n--- SECURITY ANALYSIS ---")
+            log.append(f"MIN-CUT TEST: {min_cut_msg}")
             
-            # 2.2 Linear Independence Check
-            edge_to_idx = {edge: i for i, edge in enumerate(G.edges())}
-            num_edges = len(G.edges())
+            # 2.2 Linear Independence Check with Public Announcements
+            # Create a system of equations representing the adversary's knowledge
+            all_edges = list(G.edges())
+            edge_to_idx = {edge: i for i, edge in enumerate(all_edges)}
+            num_edges = len(all_edges)
             
-            # Adversary's basis: wiretapped edges
-            adversary_basis = []
+            # Adversary's basis: wiretapped edges and public announcements
+            adversary_equations = []
+            
+            # Add wiretapped edges as known variables
             for edge in adversary.wiretapped_edges:
                 if edge in edge_to_idx:
                     vec = np.zeros(num_edges, dtype=int)
                     vec[edge_to_idx[edge]] = 1
-                    adversary_basis.append(vec)
+                    adversary_equations.append((vec, local_keys.get(edge, 0)))
             
-            # Key path vector
-            path_vec = np.zeros(num_edges, dtype=int)
+            # Add public announcements as equations
+            for edges, value in public_announcements.items():
+                vec = np.zeros(num_edges, dtype=int)
+                for edge in edges:
+                    if edge in edge_to_idx:
+                        vec[edge_to_idx[edge]] = 1
+                adversary_equations.append((vec, value))
+            
+            # Key path vector (what we want to check if it's in the span)
+            key_path_vec = np.zeros(num_edges, dtype=int)
             for edge in path_edges:
                 if edge in edge_to_idx:
-                    path_vec[edge_to_idx[edge]] = 1
+                    key_path_vec[edge_to_idx[edge]] = 1
             
-            # Check if path is in the span of adversary's knowledge
-            if adversary_basis:
-                adversary_matrix = np.array(adversary_basis)
-                rank_before = _rank_gf2(adversary_matrix)
-                augmented_matrix = np.vstack([adversary_matrix, path_vec])
+            # Solve the system of equations to see if the key path can be reconstructed
+            if adversary_equations:
+                # Extract coefficient matrix and constants
+                A = np.array([eq[0] for eq in adversary_equations])
+                b = np.array([eq[1] for eq in adversary_equations])
+                
+                # Check if the key path is in the span of the adversary's knowledge
+                rank_before = _rank_gf2(A.copy())
+                augmented_matrix = np.vstack([A, key_path_vec])
                 rank_after = _rank_gf2(augmented_matrix)
                 
                 if verbose:
-                    print(f"Adversary matrix rank: {rank_before}")
-                    print(f"Augmented matrix rank: {rank_after}")
+                    log.append(f"\nADVERSARY'S KNOWLEDGE MATRIX (rank {rank_before}):")
+                    for i, (vec, val) in enumerate(adversary_equations):
+                        edge_desc = f"Wiretap {i+1}: " if i < len(adversary.wiretapped_edges) else f"Announcement {i-len(adversary.wiretapped_edges)+1}: "
+                        log.append(f"{edge_desc}{dict(zip(all_edges, vec))} = {val}")
+                    
+                    log.append(f"\nKEY PATH VECTOR: {dict(zip(all_edges, key_path_vec))}")
+                    log.append(f"Rank before adding key path: {rank_before}")
+                    log.append(f"Rank after adding key path:  {rank_after}")
                 
                 if rank_after > rank_before:
                     secrecy = True
                     log.append("SECRECY: Key path is independent of adversary's knowledge.")
                 else:
-                    log.append("SECRECY BREACH: Key path can be reconstructed by the adversary.")
-            else:
-                # No adversary edges, always secure
-                secrecy = True
-                log.append("SECRECY: No edges are wiretapped.")
-            
-            # 2.3 Check if adversary can reconstruct the key
-            if not secrecy:
-                # Try to reconstruct the key using wiretapped edges and public announcements
-                # This is a more thorough check than just the rank test
-                if _can_adversary_reconstruct(G, up, adversary, local_keys, log, verbose):
-                    secrecy = False
-                    log.append("SECRECY BREACH: Adversary can reconstruct the key!")
-                else:
-                    log.append("SECRECY: Adversary cannot reconstruct the key despite min-cut.")
-                    secrecy = True  # Override if reconstruction fails
+                    log.append("SECRECY BREACH: Key path can be reconstructed by the adversary!")
                     
+                    # Try to actually reconstruct the key
+                    if _can_adversary_reconstruct(G, up, adversary, local_keys, log, verbose):
+                        log.append("SECRECY BREACH: Adversary can reconstruct the exact key!")
+                        secrecy = False
+                    else:
+                        log.append("SECRECY: Despite linear dependence, adversary cannot reconstruct the exact key.")
+                        secrecy = True
+            else:
+                # No adversary edges or announcements, always secure
+                secrecy = True
+                log.append("SECRECY: No edges are wiretapped and no public announcements exist.")
+            
         except nx.NetworkXNoPath:
-            log.append("ERROR: No path exists between users.")
+            log.append("\nERROR: No path exists between users.")
             sound = False
 
     if verbose:
@@ -510,7 +586,9 @@ def simulate_krp(
         'secrecy': secrecy,
         'log': log,
         'adversary_edges': adversary.wiretapped_edges,
-        'min_cut_test': min_cut_test_passed
+        'min_cut_test': min_cut_test_passed,
+        'public_announcements': public_announcements,
+        'local_keys': local_keys if verbose else None
     }
 
 # ----------------------------------------------
