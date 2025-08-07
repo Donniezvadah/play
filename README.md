@@ -24,16 +24,15 @@ This repository contains a Python implementation of the **Key Relay Protocol (KR
 
 ## 📘 Theoretical Background
 
-The Key Relay Protocol allows secure key establishment between user pairs in a graph-based network using **edge-local random keys** and **node-local public announcements**. Each edge in the graph generates a random bit, and public information is formed from linear combinations of these bits. The protocol operates over the finite field $ \mathbb{Z}_2 $, and each piece of information (secret keys, public announcements, wiretap knowledge) is represented as a **vector in the vector space $ \mathbb{Z}_2^{|E|}$**, where $ |E| $ is the number of edges in the graph.
+The Key Relay Protocol allows secure key establishment between user pairs in a graph-based network using **edge-local random keys** and **node-local public announcements**. Each edge in the graph generates a random bit, and public information is formed from linear combinations of these bits. The protocol operates over the finite field $\mathbb{Z}_2$, and each piece of information (secret keys, public announcements, wiretap knowledge) is represented as a **vector in the vector space $ \mathbb{Z}_2^{|E|}$**, where $|E|$ is the number of edges in the graph.
 
 A key is considered **secure** if it is linearly independent of any adversarial knowledge, which includes both:
 - The **primitive edge secrets** in the wiretap set $ E_w$, and
 - The set of all **public announcements** made during the protocol.
+- The **adversarial knowledge** $ E_A$.
 
 Mathematically, for a key $ k$, the condition for security is:
-$$
-k \notin \text{span}\left( \{v_e \mid e \in E_w\} \cup P \right)
-$$
+$$k \notin \text{span}\left( \{v_e \mid e \in E_w\} \cup P \right)$$
 
 The complete formulation of this model is found in the definitions and linear algebraic descriptions within the main thesis or technical paper.
 
@@ -59,7 +58,7 @@ The KRP enables a user pair, $(u_1, u_2)$, to establish a shared secret key by l
 
 1.  **Local Key Generation**: For each edge $e \in E$, a random local key $k_e \in \{0, 1\}$ is generated and shared securely between the two nodes connected by $e$. All operations are performed in GF(2), where addition corresponds to the XOR operation.
 
-2.  **Shared Key Computation**: The user pair finds a path $P$ between $u_1$ and $u_2$. A path is a sequence of edges, $P = \{e_1, e_2, ..., e_m\}$. The final shared key, $K$, is computed by XORing the local keys of all edges along this path:
+2.  **Shared Key Computation**:  The user pair finds a path $P$ between $u_1$ and $u_2$. A path is a sequence of edges, $P = \{e_1, e_2, ..., e_m\}$. The final shared key, $K$, is computed by XORing the local keys of all edges along this path:
 
     $$ K = \bigoplus_{e \in P} k_e = k_{e_1} \oplus k_{e_2} \oplus ... \oplus k_{e_m} $$
 
