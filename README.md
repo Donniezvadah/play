@@ -61,9 +61,7 @@ The **Key Relay Protocol (KRP)** enables each user pair $(u_i, u_j)$ to establis
 
 Each edge $e \in E$ independently generates a random bit $k_e \in \{0,1\}$, and this collection of bits forms the basis vectors of the ambient vector space $\mathbb{Z}_2^{|E|}$. These bits are distributed to the nodes incident to each edge. Each node $n_i \in V$ is then allowed to make a public announcement $p_i$, chosen as a linear combination of the random bits on its incident edges and the public information already broadcast:
 
-$$
-p_i \in \text{span}\left( \{v_e \mid n_i \in e\} \cup P_{<i} \right)
-$$
+$$p_i \in \text{span}\left( \{v_e \mid n_i \in e\} \cup P_{<i} \right)$$
 
 where $v_e \in \mathbb{Z}_2^{|E|}$ is the incidence vector of edge $e$, and $P_{<i}$ denotes all previous public announcements.
 
@@ -199,6 +197,17 @@ python3 krp.py #This is for linux
 python krp.py #This is for windows
 ```
 
+The user will be asked between 1 Interactive or 2 Batch mode.
+
+1 Interactive mode will allow the user to input their own graph and user pairs.
+2 Batch mode will run the simulation on some predefine graph and user pairs.
+
+## Interactive Mode
+
+In interactive mode, the user will be asked to input the number of nodes and the number of user pairs.
+Make use of instruction from the input requestions ie "Enter the number of nodes: " to input the number of nodes.
+
+
 The script's `if __name__ == "__main__":` block is configured to run a default scenario.
 
 ### Running the Tests
@@ -212,9 +221,6 @@ python3 -m unittest test_krp.py
 All tests should pass, confirming that the simulation engine behaves as expected under the tested conditions.
 
 ---
-### Graph Visualization
-
-The script generates the following visualization for the K3 graph. The user pair (0, 1) is highlighted in blue, and all edges are marked as wiretapped (red, dashed) because the adversary has compromised the entire network.
 
 ## 🧮 Algorithm Overview
 
