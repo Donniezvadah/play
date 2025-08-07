@@ -163,7 +163,7 @@ The project is divided into a simulation engine and a test suite.
 This file contains the core logic for the KRP simulation.
 
 - **Data Structures**:
-  - `UserPair`: Represents a user pair `(u_i, u_j)` and stores their computed keys.
+  - `UserPair`: Represents a user pair $(u_i, u_j)$ and stores their computed keys.
   - `Adversary`: Represents the adversary and stores the set of wiretapped edges.
 
 - **Key Functions**:
