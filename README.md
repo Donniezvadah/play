@@ -61,11 +61,11 @@ The **Key Relay Protocol (KRP)** enables each user pair $(u_i, u_j)$ to establis
 
 Each edge $e \in E$ independently generates a random bit $k_e \in \{0,1\}$, and this collection of bits forms the basis vectors of the ambient vector space $\mathbb{Z}_2^{|E|}$. These bits are distributed to the nodes incident to each edge. Each node $n_i \in V$ is then allowed to make a public announcement $p_i$, chosen as a linear combination of the random bits on its incident edges and the public information already broadcast:
 
-$$p_i \in \text{span}\left( \{v_e \mid n_i \in e\} \cup P_{<i} \right)$$
+$$p_i \in \text{span}( \{v_e \mid n_i \in e\} \cup P_{<i} )$$
 
 where $v_e \in \mathbb{Z}_2^{|E|}$ is the incidence vector of edge $e$, and $P_{<i}$ denotes all previous public announcements.
 
-A shared key $k \in \mathbb{Z}_2^{|E|}$ is then chosen from the span of all primitive edge keys:
+A shared key $k \in \mathbb{Z}_2^{|E|}$ is then chosen as a linear combination of all primitive edge keys:
 
 $$
 k \in \text{span}(E)
@@ -172,19 +172,7 @@ This file contains the core logic for the KRP simulation.
     - `sound`: A boolean indicating if the soundness property holds.
     - `secrecy`: A boolean indicating if the secrecy property holds (currently a placeholder).
     - `log`: A detailed log of the simulation steps.
-
-### `test_krp.py` - The Testing Suite
-
-This file uses Python's `unittest` framework to verify the correctness of the simulation engine.
-
-The test cases ensure that:
-
-- `test_enumerate_all_graphs_small`: The graph enumeration function produces the correct number of graphs for small `n` (n=2, n=3).
-- `test_simulate_krp_sound`: The protocol is correctly identified as **sound** when users are connected.
-- `test_simulate_krp_no_path`: The protocol is correctly identified as **not sound** when users are in disconnected components of the graph.
-- `test_adversary_observation`: The simulation log correctly records the keys observed by the adversary.
-
----
+____
 
 ## How to Run
 
