@@ -187,7 +187,7 @@ def find_min_cut_edges(G: nx.Graph, sources: List[int], targets: List[int]) -> S
         return min_cut_set if min_cut_set is not None else set()
 
 # ----------------------------
-# Helper for GF(2) linear algebra
+# Helper for GF(2) linear algebra over the space of edge secrets
 # ----------------------------
 
 def _rank_gf2(M):
