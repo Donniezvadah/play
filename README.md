@@ -55,6 +55,47 @@ $$ G = (V, E) $$
 
 
 
+### 🔐 The Protocol
+
+The **Key Relay Protocol (KRP)** enables each user pair $(u_i, u_j)$ to establish a shared secret key by leveraging a combination of locally generated random bits on edges and public announcements made by intermediate relay nodes. The protocol operates in the finite field $\mathbb{Z}_2$, with all operations being linear combinations (bitwise XOR) over the space of edge secrets.
+
+Each edge $e \in E$ independently generates a random bit $k_e \in \{0,1\}$, and this collection of bits forms the basis vectors of the ambient vector space $\mathbb{Z}_2^{|E|}$. These bits are distributed to the nodes incident to each edge. Each node $n_i \in V$ is then allowed to make a public announcement $p_i$, chosen as a linear combination of the random bits on its incident edges and the public information already broadcast:
+
+$$
+p_i \in \text{span}\left( \{v_e \mid n_i \in e\} \cup P_{<i} \right)
+$$
+
+where $v_e \in \mathbb{Z}_2^{|E|}$ is the incidence vector of edge $e$, and $P_{<i}$ denotes all previous public announcements.
+
+A shared key $k \in \mathbb{Z}_2^{|E|}$ is then chosen from the span of all primitive edge keys:
+
+$$
+k \in \text{span}(E)
+$$
+
+The design of the public announcements must guarantee that the key $k$ is reconstructible by both endpoints $u_i$ and $u_j$ of the user pair. That is, each user must be able to compute $k$ from their local edge information and the global public announcements:
+But also making sure the adversary cannot compute the key $k$ from their wiretapped edges and the global public announcements.
+There has to be Linear Independence between the key $k$ and the adversary's knowledge + Public Announcements.
+
+$$
+k \in \text{span}(\{v_e \mid u_i \in e\} \cup P) \quad \text{and} \quad k \in \text{span}(\{v_e \mid u_j \in e\} \cup P)
+$$
+
+To ensure information-theoretic secrecy against an adversary with access to a wiretap set $E_w \subseteq E$, the key $k$ must be linearly independent of all information accessible to the adversary. The adversary’s knowledge is captured by the subspace:
+
+$$
+A_{E_w} = \text{span}\left( \{v_e \mid e \in E_w\} \cup P \right)
+$$
+
+The protocol guarantees secrecy if and only if:
+
+$$
+k \notin A_{E_w} \quad \Leftrightarrow \quad \text{rank}(A_{E_w} \cup \{k\}) > \text{rank}(A_{E_w})
+$$
+
+This formulation avoids any dependency on specific paths between user pairs and instead defines keys and announcements purely as combinations of edge secrets. The flexibility of public announcements—subject to local constraints—defines the expressive power of KRP and forms the basis for comparing it with other protocols such as Secure Network Coding (SNC).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 ### Adversarial Model
 
 An adversary is defined by the set of edges they can wiretap.
