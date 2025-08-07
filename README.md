@@ -13,9 +13,32 @@ This repository contains a Python-based framework for the simulation and verific
    - [`test_krp.py` - The Testing Suite](#test_krppy---the-testing-suite)
 3. [How to Run](#how-to-run)
    - [Running the Simulation](#running-the-simulation)
-   - [Running the Tests](#running-the-tests)
+   - [Algorithm Overview](#algorithm-overview)
 
 ---
+
+
+# Key Relay Protocol (KRP) Graph Verification
+
+This repository contains a Python implementation of the **Key Relay Protocol (KRP)** verification algorithm. Given a graph topology, a set of communicating user pairs, and potential wiretap sets, the algorithm determines whether secure key distribution is possible under the KRP model. The implementation is based on a rigorous linear algebraic formulation of KRP, and is intended as both a validator and an experimental tool for generating counterexamples that differentiate KRP from Secure Network Coding (SNC).
+
+## 📘 Theoretical Background
+
+The Key Relay Protocol allows secure key establishment between user pairs in a graph-based network using **edge-local random keys** and **node-local public announcements**. Each edge in the graph generates a random bit, and public information is formed from linear combinations of these bits. The protocol operates over the finite field $ \mathbb{Z}_2 $, and each piece of information (secret keys, public announcements, wiretap knowledge) is represented as a **vector in the vector space $ \mathbb{Z}_2^{|E|}$**, where $ |E| $ is the number of edges in the graph.
+
+A key is considered **secure** if it is linearly independent of any adversarial knowledge, which includes both:
+- The **primitive edge secrets** in the wiretap set $ E_w$, and
+- The set of all **public announcements** made during the protocol.
+
+Mathematically, for a key $ k$, the condition for security is:
+$$
+k \notin \text{span}\left( \{v_e \mid e \in E_w\} \cup P \right)
+$$
+
+The complete formulation of this model is found in the definitions and linear algebraic descriptions within the main thesis or technical paper.
+
+
+
 
 ## Mathematical Foundations
 
@@ -158,26 +181,31 @@ python3 -m unittest test_krp.py
 All tests should pass, confirming that the simulation engine behaves as expected under the tested conditions.
 
 ---
-
-## Example Simulation
-
-Running `python3 krp.py` will enumerate all non-isomorphic graphs with 3 nodes, simulate the KRP on each, and save a visualization to the `plots/` directory. The adversary is assumed to have wiretapped all edges.
-
-Below is the output for the complete graph on 3 nodes (K3):
-
-```
---- Graph 4 ---
-Plot saved to plots/graph_4_nodes_3.png
-Local key for edge (0, 1): 1
-Local key for edge (0, 2): 1
-Local key for edge (1, 2): 1
-UserPair (0,1) path: [0, 1], key: 1
-Adversary wiretapped edges: {(0, 1), (0, 2), (1, 2)}, observed keys: [1, 1, 1]
-SECRECY BREACH: Path for UserPair (0,1) is in adversary's subspace.
-```
-
 ### Graph Visualization
 
 The script generates the following visualization for the K3 graph. The user pair (0, 1) is highlighted in blue, and all edges are marked as wiretapped (red, dashed) because the adversary has compromised the entire network.
 
-<!-- ![K3 Graph Visualization](plots/graph_4_nodes_3.png) -->
+## 🧮 Algorithm Overview
+
+The algorithm (detailed in [Algorithm Appendix A](#)) proceeds in five main stages:
+
+1. **Graph Validation**:
+   - Ensures the graph is connected.
+   - Checks whether the min-cut condition holds for all user pairs.
+
+2. **Key Generation**:
+   - Generates random edge keys $ r_e \in \mathbb{Z}_2$.
+   - Distributes keys to incident nodes.
+
+3. **Public Announcement Simulation**:
+   - Nodes generate public information from local edge keys.
+   - Ensures consistency and spans local information spaces.
+
+4. **Security Verification**:
+   - Checks if user keys are linearly independent of adversary's span.
+   - Confirms whether both users in each pair can recover the key.
+
+5. **Visualization**:
+   - Plots the graph with user pairs and wiretap sets highlighted.
+
+
