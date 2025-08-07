@@ -52,7 +52,7 @@ $$ G = (V, E) $$
 
 ### The Protocol
 
-The KRP enables a user pair, $(u_1, u_2)$, to establish a shared secret key by leveraging the network's relay nodes.
+The KRP enables a user pairs, $(u_i, u_j)$, to establish a shared secret key by leveraging the network's relay nodes.
 
 1.  **Local Key Generation**: For each edge $e \in E$, a random local key $k_e \in \{0, 1\}$ is generated and shared securely between the two nodes connected by $e$. All operations are performed in GF(2), where addition corresponds to the XOR operation.
 
