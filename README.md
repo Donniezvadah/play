@@ -1,5 +1,8 @@
 # Key Relay Protocol (KRP) Verification Framework
 
+**Welcome to the Key Relay Protocol (KRP) Verification Framework Documentation and Pipeline**
+
+
 This repository contains a Python-based framework for the simulation and verification of the **Key Relay Protocol (KRP)**, a cryptographic protocol designed to extend the reach of secure communication networks like Quantum Key Distribution (QKD) systems. The framework exhaustively tests the protocol's security properties on small, undirected graphs against a defined adversarial model.
 
 ## Table of Contents
@@ -50,17 +53,7 @@ $$ G = (V, E) $$
 - **V**: A set of nodes, representing users or network relays.
 - **E**: A set of edges, representing secure communication links (e.g., QKD links) where local keys can be established.
 
-### The Protocol
 
-The KRP enables a user pairs, $(u_i, u_j)$, to establish a shared secret key by leveraging the network's relay nodes.
-
-1.  **Local Key Generation**: For each edge $e \in E$, a random local key $k_e \in \{0, 1\}$ is generated and shared securely between the two nodes connected by $e$. All operations are performed in GF(2), where addition corresponds to the XOR operation.
-
-2.  **Shared Key Computation**:  The user pair finds a path $P$ between $u_1$ and $u_2$. A path is a sequence of edges, $P = \{e_1, e_2, ..., e_m\}$. The final shared key, $K$, is computed by XORing the local keys of all edges along this path:
-
-    $$K = \bigoplus_{e \in P} k_e = k_{e_1} \oplus k_{e_2} \oplus ... \oplus k_{e_m}$$
-
-    Since the same path is used (or any two paths that form a cycle), both users arrive at the identical key $K$.
 
 ### Adversarial Model
 
@@ -112,7 +105,7 @@ If the rank does not increase, the path vector can be constructed from the adver
 
 As a critical prerequisite to the linear independence check, the set of edges controlled by the adversary must form a **minimum edge cut** (or *min-cut*) between the user pair. This condition ensures that the adversary has just enough access to potentially compromise the key, without having redundant information.
 
-- **Edge Cut**: A set of edges is a cut between a user pair $(u_1, u_2)$ if removing those edges from the graph disconnects the users, meaning there is no longer a path between them.
+- **Edge Cut**: A set of edges is a cut between a user pair $(u_i, u_j)$ if removing those edges from the graph disconnects the users, meaning there is no longer a path between them.
 - **Minimum Edge Cut**: An edge cut is a *minimum* cut if it has the smallest possible number of edges among all possible cuts that separate the users.
 
 The framework verifies this condition using the `verify_min_cut_condition` function, which confirms two things:
@@ -132,7 +125,7 @@ The project is divided into a simulation engine and a test suite.
 This file contains the core logic for the KRP simulation.
 
 - **Data Structures**:
-  - `UserPair`: Represents a user pair `(u1, u2)` and stores their computed keys.
+  - `UserPair`: Represents a user pair `(u_i, u_j)` and stores their computed keys.
   - `Adversary`: Represents the adversary and stores the set of wiretapped edges.
 
 - **Key Functions**:
@@ -162,7 +155,8 @@ The test cases ensure that:
 To run the main simulation script, which will enumerate all graphs for 3 nodes and simulate the KRP on each, execute the following command:
 
 ```bash
-python3 krp.py
+python3 krp.py #This is for linux 
+python krp.py #This is for windows
 ```
 
 The script's `if __name__ == "__main__":` block is configured to run a default scenario.
@@ -191,7 +185,7 @@ The algorithm (detailed in [Algorithm Appendix A](#)) proceeds in five main stag
    - Checks whether the min-cut condition holds for all user pairs.
 
 2. **Key Generation**:
-   - Generates random edge keys $ r_e \in \mathbb{Z}_2$.
+   - Generates random edge keys $r_e \in \mathbb{Z}_2$.
    - Distributes keys to incident nodes.
 
 3. **Public Announcement Simulation**:
@@ -204,5 +198,12 @@ The algorithm (detailed in [Algorithm Appendix A](#)) proceeds in five main stag
 
 5. **Visualization**:
    - Plots the graph with user pairs and wiretap sets highlighted.
+
+   ## Cloning the repository
+   ```bash
+   git clone https://github.com/Donniezvadah/play.git
+   cd play
+   ```
+
 
 
