@@ -77,9 +77,7 @@ The design of the public announcements must guarantee that the key $k$ is recons
 But also making sure the adversary cannot compute the key $k$ from their wiretapped edges and the global public announcements.
 There has to be Linear Independence between the key $k$ and the adversary's knowledge + Public Announcements.
 
-$$
-k \in \text{span}(\{v_e \mid u_i \in e\} \cup P) \quad \text{and} \quad k \in \text{span}(\{v_e \mid u_j \in e\} \cup P)
-$$
+$$k \in \text{span}(\{v_e \mid u_i \in e\} \cup P) \quad \text{and} \quad k \in \text{span}(\{v_e \mid u_j \in e\} \cup P)$$
 
 To ensure information-theoretic secrecy against an adversary with access to a wiretap set $E_w \subseteq E$, the key $k$ must be linearly independent of all information accessible to the adversary. The adversary’s knowledge is captured by the subspace:
 
@@ -94,7 +92,8 @@ k \notin A_{E_w} \quad \Leftrightarrow \quad \text{rank}(A_{E_w} \cup \{k\}) > \
 $$
 
 This formulation avoids any dependency on specific paths between user pairs and instead defines keys and announcements purely as combinations of edge secrets. The flexibility of public announcements—subject to local constraints—defines the expressive power of KRP and forms the basis for comparing it with other protocols such as Secure Network Coding (SNC).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+_________________________________________________________________________________________
+_________________________________________________________________________________________
 
 ### Adversarial Model
 
