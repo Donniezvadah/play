@@ -61,11 +61,11 @@ The **Key Relay Protocol (KRP)** enables each user pair $(u_i, u_j)$ to establis
 
 Each edge $e \in E$ independently generates a random bit $k_e \in \{0,1\}$, and this collection of bits forms the basis vectors of the ambient vector space $\mathbb{Z}_2^{|E|}$. These bits are distributed to the nodes incident to each edge. Each node $n_i \in V$ is then allowed to make a public announcement $p_i$, chosen as a linear combination of the random bits on its incident edges and the public information already broadcast:
 
-$$p_i \in \text{span}(\{v_e \mid n_i \in e\} \cup P_{<i})$$
+$$ p_i \in \text{span}(\{v_e \mid n_i \in e\} \cup P_{<i}) $$
 
-where $v_e \in \mathbb{Z}_2^{|E|}$ is the incidence vector of edge $e$, and $P_{<i}$ denotes all previous public announcements.
+where $ v_e \in \mathbb{Z}_2^{|E|} $ is the incidence vector of edge $e$, and $ P_{<i} $ denotes all previous public announcements.
 
-A shared key $k \in \mathbb{Z}_2^{|E|}$ is then chosen as a linear combination of all primitive edge keys:
+A shared key $ k \in \mathbb{Z}_2^{|E|} $ is then chosen as a linear combination of all primitive edge keys $ E $:
 
 $$
 k \in \text{span}(E)
